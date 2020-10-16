@@ -1,6 +1,6 @@
 all: shell
 
-GCC_OPT= -Wall -Werror -g
+GCC_OPT= -Wall -g
 
 *.o: $^
 	gcc $(GCC_OPT) -c $<

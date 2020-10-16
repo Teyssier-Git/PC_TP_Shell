@@ -16,7 +16,7 @@ int pwd (char**envp, FILE *f) {
   }
   return 1;
 }
-
+/*
 int set (char* name, char**envp) {
     for (int i=0;envp[i]!=NULL;i++) {
         int
@@ -32,3 +32,4 @@ int set (char* name, char**envp) {
     printf("\n");
 
 }
+*/

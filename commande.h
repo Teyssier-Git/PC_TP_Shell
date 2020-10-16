@@ -1,8 +1,6 @@
 #ifndef COMMANDE_H
 #define COMMANDE_H
 
-#include <stdio.h>
-#include <stdin.h>
 
 void ls (void);
 void cd (void);

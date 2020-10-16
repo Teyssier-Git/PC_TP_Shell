@@ -34,12 +34,13 @@ int main(int argc, char** argv, char**envp) {
   for (;;) {
     printf("> ");
     fflush(stdout);
+    char *line = readline();
     printf("%s\n", line);
     char** words = split_in_words(line);
 
     /* Execution */
     if (!strcmp(words[0], "pwd"))
-      pwd(envp, stdout);
+      pwd(m_env, stdout);
 
     free(words);
     free(line);
