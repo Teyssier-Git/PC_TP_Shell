@@ -1,30 +1,46 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include "readline.h"
 
 int main(int argc, char** argv, char**envp) {
 
-  for (int i=0;envp[i]!=NULL;i++)
-    printf("env[%d]=%s\n",i,envp[i]);
-  printf("\n");
+    // Recuperation taille envp
+    int tmp_size=0;
+    while (envp[tmp_size]!=NULL) {
+        tmp_size++;
+    }
 
-  // set stdout without buffering so what is printed
-  // is printed immediately on the screen.
-  // setvbuf(stdout, NULL, _IONBF, 0);
-  // setbuf(stdout, NULL);
+    // printf("%d\n",tmp_size);
+    char **m_env = (char **)malloc(tmp_size*sizeof(char **));
+    for (int i=0;i<tmp_size;i++) {
+        m_env[i] = (char *)malloc(strlen(envp[i])*sizeof(char));
+        strcpy(m_env[i],envp[i]);
+    }
 
-  for (;;) {
-    printf("> ");
-    fflush(stdout);
-    char* line = readline();
-    printf("%s\n", line);
-    char** words = split_in_words(line);
-    for (int i=0;words[i]!=NULL;i++)
-      printf("[%s], ", words[i]);
+    // affichage environement
+    for (int i=0;i<tmp_size;i++) {
+        printf("env[%d]=%s\n",i,m_env[i]);
+    }
     printf("\n");
-    free(words);
-    free(line);
-  }
-  return 0;
+
+    // set stdout without buffering so what is printed
+    // is printed immediately on the screen.
+    // setvbuf(stdout, NULL, _IONBF, 0);
+    // setbuf(stdout, NULL);
+
+    for (;;) {
+        printf("> ");
+        fflush(stdout);
+        char* line = readline();
+        printf("%s\n", line);
+        char** words = split_in_words(line);
+        for (int i=0;words[i]!=NULL;i++)
+            printf("[%s], ", words[i]);
+        printf("\n");
+        free(words);
+        free(line);
+    }
+    return 0;
 }
