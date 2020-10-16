@@ -3,7 +3,7 @@
 
 
 void ls (void);
-void cd (void);
+int cd (char **envp,char *name);
 void cp(void);
 int pwd (char**envp, FILE *f);
 void print (void);
