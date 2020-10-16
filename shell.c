@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 #include "readline.h"
+#include "commande.h"
 
 int main(int argc, char** argv, char**envp) {
 
@@ -17,12 +19,13 @@ int main(int argc, char** argv, char**envp) {
   for (;;) {
     printf("> ");
     fflush(stdout);
-    char* line = readline();
     printf("%s\n", line);
     char** words = split_in_words(line);
-    for (int i=0;words[i]!=NULL;i++)
-      printf("[%s], ", words[i]);
-    printf("\n");
+
+    /* Execution */
+    if (!strcmp(words[0], "pwd"))
+      pwd(envp, stdout);
+
     free(words);
     free(line);
   }

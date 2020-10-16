@@ -4,7 +4,7 @@
 void ls (void);
 void cd (void);
 void cp(void);
-void pwd (void);
+int pwd (char**envp, FILE *f);
 void print (void);
 void set (void);
 
