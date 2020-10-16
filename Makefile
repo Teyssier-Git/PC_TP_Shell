@@ -1,9 +1,15 @@
-all:
+all: shell
 
-GCC_OPT= -Wall
+GCC_OPT= -Wall -Werror -g
 
-readline.o: readline.c
-	gcc $(GCC_OPT) -c @<
+shell: shell.o readline.o
+	gcc $(GCC_OPT) -o $@ $^
+
+shell.o: shell.c readline.h
+	gcc $(GCC_OPT) -c $<
+
+readline.o: readline.c readline.h
+	gcc $(GCC_OPT) -c $<
 
 clean:
-	rm -f *.o *~
+	rm -f *.o *~ shell

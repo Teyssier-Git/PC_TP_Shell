@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -6,10 +5,10 @@
 #include <limits.h>
 #include <string.h>
 #include <unistd.h>
-
+#include "readline.h"
 /*
- * Read a line from standard input into a newly allocated 
- * array of char. The allocation is via malloc(size_t), the array 
+ * Read a line from standard input into a newly allocated
+ * array of char. The allocation is via malloc(size_t), the array
  * must be freed via free(void*).
  */
 
@@ -33,7 +32,7 @@ char *readline(void) {
   return line;
 }
 
-/* 
+/*
  * Split the string in words, according to the simple shell grammar.
  * Returns a null-terminated array of words.
  * The array has been allocated by malloc, it must be freed by free.
@@ -116,29 +115,6 @@ char **split_in_words(char *line) {
 }
 
 
+/*
 
-int main(int argc, char** argv, char**envp) {
-
-  for (int i=0;envp[i]!=NULL;i++)
-    printf("env[%d]=%s\n",i,envp[i]);
-  printf("\n");
-
-  // set stdout without buffering so what is printed
-  // is printed immediately on the screen.
-  // setvbuf(stdout, NULL, _IONBF, 0); 
-  // setbuf(stdout, NULL);
-  
-  for (;;) {
-    printf("> ");
-    fflush(stdout);
-    char* line = readline();
-    printf("%s\n", line);
-    char** words = split_in_words(line);
-    for (int i=0;words[i]!=NULL;i++)
-      printf("[%s], ", words[i]);
-    printf("\n");
-    free(words);
-    free(line);
-  }
-  return 0;
-}
+*/
