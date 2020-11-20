@@ -2,14 +2,14 @@
 #define COMMANDE_H
 #include <stdio.h>
 #define N 128
-#define CHAINE_LENGTH 128
+#define CHAINE_LENGTH 512
 
-int separate(char **result, char *chaine, char separateur, int nbSep);
+char ** separate(int *bn, char *chaine, char *sep, int nb_sep) ;
 
 void ls (void);
 int cd (char **envp,char *name);
 void cp(void);
-int pwd (char**envp, FILE *f);
+int pwd (char**envp, FILE *f, int n);
 void print (void);
 int set (char **env, char *name, char *val);
 

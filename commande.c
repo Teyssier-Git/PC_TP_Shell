@@ -5,23 +5,54 @@
 #include <stdlib.h>
 #include "commande.h"
 
-int separate(char **result, char *chaine, char separateur, int nb_sep) {
-    int size = strlen(chaine);
-    int act_chaine = 0;
-    int act_char = 0;
+/*
 
-    for (int i=0; i<size; i++) {
-        if ((nb_sep != 0) && (chaine[i] == separateur)) {
-            act_chaine++;
-            nb_sep --;
-            act_char=0;
-        } else {
-            result[act_chaine][act_char] = chaine[i];
-            act_char++;
-            result[act_chaine][act_char] = '\0';
-        }
+fonction qui sépare la chaine de charactère passées en arguments (chaine) en focntion du séparateur "sep"
+retourn un tableau contenant les éléments séparés
+
+*/
+char ** separate(int *bn, char *chaine, char *sep, int nb_sep) {
+
+  char *cchaine = (char * ) malloc(sizeof(char) * CHAINE_LENGTH);
+  strcpy(cchaine, chaine);
+
+  int nTotalItems = 0;
+  char *buffer = strtok(cchaine, sep);
+  int tmb_sep = nb_sep;
+
+  do {
+    nTotalItems ++;
+    nb_sep --;
+  } while ((nb_sep !=0) && ((buffer=strtok(NULL, sep))!= NULL));
+
+  char** strArray = malloc( nTotalItems * sizeof( char* ));
+  int    nIndex  = 0;
+
+  strcpy(cchaine, chaine);
+  // re-setup buffer
+  buffer = strtok(cchaine, sep);
+  nb_sep = tmb_sep;
+
+  do {
+
+     // allocate the buffer for string and copy...
+     strArray[ nIndex ] = malloc( strlen( buffer ) + 1 );
+     strcpy( strArray[ nIndex ], buffer );
+     nb_sep --;
+     nIndex++;
+
+   } while ((nb_sep !=0) && ((buffer=strtok(NULL, sep))!= NULL));
+
+  *bn = nTotalItems;
+  free(cchaine);
+  return strArray;
+}
+
+void freeSeparate(char **result, int nb) {
+    for (int i=0; i<nb; i++) {
+        free(result[i]);
     }
-    return act_chaine +1;
+    free(result);
 }
 
 /*
@@ -51,74 +82,116 @@ int find_var_env (char **env, char *varName) {
   return -1;
 }
 
-int pwd (char**envp, FILE *f) {
+int pwd (char**envp, FILE *f, int n) {
   int i = find_var_env(envp, "PWD");
   if (i >= 0) {
-    char ** lignes = (char **) malloc(N * sizeof(char **));
-    for (int i = 0; i < N; i ++)
-      lignes[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
+    int nb;
+    char **lignes = separate(&nb, envp[i], "=", -1);
 
-    int n = separate(lignes, envp[i], '=', 1);
-    fprintf(f, "%s\n", lignes[1]);
-    for (int i = 1; i < N ; i++)
-      free(lignes[i]);
+    fprintf(f, "%s", lignes[1]);
+    if (n==0)
+      fprintf(f, "%s", "\n");
 
+    freeSeparate(lignes, nb);
     return 0;
   }
   return 1;
 }
 
 
+
+
 int cd (char **envp, char *name) {
   // On découpe le chemin dest
-  char ** path = (char **) malloc(N * sizeof(char **));
-  for (int i = 0; i < N; i ++)
-    path[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
+  int nb_dir;
+  char ** path = separate(&nb_dir, name, "/", -1);
 
-  int nb_dir = separate(path, name, '/', -1);
-
-  char ** get = (char **) malloc(N * sizeof(char **));
-  for (int i = 0; i < N; i ++)
-    get[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
 
   for (int act_dir = 0; act_dir < nb_dir; act_dir ++) {
     if (strcmp(path[act_dir], "..") == 0) {
-      separate(get, envp[find_var_env(envp, "OLDPWD")], '=', -1);
-      set(envp, "PWD", get[1]);
+      int nget;
+      int tmp;
+      char ** get = separate(&nget, separate(&tmp, envp[find_var_env(envp, "PWD")], "=", -1)[1], "/", -1);
+      int n = 0;
+      for (int k = 0; k < nget-1; k++)
+        n+=strlen(get[k]) + 1;
+
+      char newPWD[n];
+      char act = 0;
+      for (int k = 0; k < nget-1; k++) {
+        newPWD[act] = '/';
+        act++;
+        strcpy(newPWD + act, get[k]);
+        act += strlen(get[k]);
+      }
+      newPWD[act] = '\0';
+      set(envp, "PWD", newPWD);
+      freeSeparate(get, nget);
+
     } else if (strcmp(path[act_dir], "~") == 0) {
       //le ~ est forcément au début
       if (act_dir == 0) {
-        separate(get, envp[find_var_env(envp, "HOME")], '=', -1);
-        set(envp, "PWD", get[1]);
+        int nget;
+        char ** get = separate(&nget, envp[find_var_env(envp, "HOME")], "=", -1);
+        char t[CHAINE_LENGTH];
+        strcpy(t, get[1]);
+        freeSeparate(get, nget);
+        set(envp, "PWD", t);
       } else {
         printf("bash: cd : %s no such file or directory\n", name);
       }
     } else {
-      DIR* dir = opendir(path[act_dir]);
-      if (dir) {
-          separate(get, envp[find_var_env(envp, "PWD")], '=', -1);
-          char new_pwd[CHAINE_LENGTH];
-          strcpy(new_pwd, get[1]);
-          new_pwd[strlen(get[1])] = '/';
-          strcpy(new_pwd + strlen(get[1]) + 1, path[act_dir]);
+      int nget;
+      char ** get = separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1);
+      char new_pwd[CHAINE_LENGTH];
+      strcpy(new_pwd, get[1]);
+      new_pwd[strlen(get[1])] = '/';
+      strcpy(new_pwd + strlen(get[1]) + 1, path[act_dir]);
+      freeSeparate(get, nget);
+
+      DIR* dir = opendir(new_pwd);
+      if (dir != NULL) {
           set(envp, "PWD", new_pwd);
           closedir(dir);
-          return 0;
       } else if (ENOENT == errno) {
-          printf("bash: cd: %s: No such file or directory\n", name);
+          printf("bash Dir: cd: %s: No such file or directory\n", new_pwd);
       } else {
           /* opendir() failed for some other reason. */
       }
     }
 
   }
-  for (int i = 0; i < N; i++) {
-    free(path[i]);
-    free(get[i]);
-  }
+  freeSeparate(path, nb_dir);
   return 1;
 }
 
-int set (char **env, char *name, char *val) {
-  return 1;
+int set (char **env, char *name, char *var) {
+    int i;
+    int sizeName = strlen(name);
+    for (i=0; env[i]!=NULL; i++) {
+
+        char tmp[strlen(env[i])];;
+        strcpy(tmp, env[i]);
+        char *p1 = strtok(tmp, "=");
+
+        if (strcmp(name,p1)==0) {
+            free(env[i]);
+            env[i] = (char *)malloc(sizeof(char)*(strlen(p1)+sizeName+strlen(var)+2));
+
+            int k=0;
+            for (; k<sizeName; k++) {
+                env[i][k] = p1[k];
+            }
+            env[i][k] = '=';
+            k++;
+            for (int j=0; var[j]!='\0'; j++, k++) {
+                env[i][k] = var[j];
+            }
+            env[i][k] = '\0';
+            return 1;
+        }
+    }
+
+    printf("Variable %s inexistante\n",name);
+    return -1;
 }

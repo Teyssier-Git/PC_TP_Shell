@@ -20,27 +20,21 @@ int main(int argc, char** argv, char**envp) {
         strcpy(m_env[i],envp[i]);
     }
 
-    // affichage environement
-    for (int i=0;i<tmp_size;i++) {
-        printf("env[%d]=%s\n",i,m_env[i]);
-    }
-    printf("\n");
-
     // set stdout without buffering so what is printed
     // is printed immediately on the screen.
     // setvbuf(stdout, NULL, _IONBF, 0);
     // setbuf(stdout, NULL);
 
   for (;;) {
+    pwd(m_env, stdout, 1);
     printf("> ");
     fflush(stdout);
     char *line = readline();
-    printf("%s\n", line);
     char** words = split_in_words(line);
 
     /* Execution */
     if (0==strcmp(words[0], "pwd"))
-        pwd(m_env, stdout);
+        pwd(m_env, stdout,0);
     if (0==strcmp(words[0], "set"))
         set(m_env,words[1],words[2]);
     if (0==strcmp(words[0], "cd"))
@@ -51,7 +45,6 @@ int main(int argc, char** argv, char**envp) {
         }
         printf("\n");
     }
-
 
     free(words);
     free(line);
