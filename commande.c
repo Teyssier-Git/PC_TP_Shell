@@ -7,14 +7,14 @@
 
 // nbSep -> nombre de fois qu'on prend en compte un separatuer
 // nbSep = -1 -> tous les separateurs
-char ** separate(int *nb_split, char *chaine, char separateur, int nbSep) {
+int separate(char **result, char *chaine, char separateur, int nbSep) {
     int size = strlen(chaine);
     int act_chaine = 0;
     int act_char = 0;
-    
-    char ** result = (char **) malloc(N * sizeof(char **));
-    for (int i = 0; i < N; i ++)
-      result[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
+
+    // char ** result = (char **) malloc(N * sizeof(char **));
+    // for (int i = 0; i < N; i ++)
+    //   result[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
 
     for (int i=0; i<size; i++) {
         if ((nbSep!=0) && chaine[i]==separateur) {
@@ -27,8 +27,14 @@ char ** separate(int *nb_split, char *chaine, char separateur, int nbSep) {
             result[act_chaine][act_char] = '\0';
         }
     }
-    *nb_split = act_chaine +1;
-    return result;
+    return act_chaine +1;
+}
+
+void freeSeparate(char **result, int nb) {
+    for (int i=0; i<nb; i++) {
+        free(result[i]);
+    }
+    free(result);
 }
 
 // int find_var_env (char **envp, char *nom) {
@@ -99,36 +105,39 @@ char ** separate(int *nb_split, char *chaine, char separateur, int nbSep) {
 // int set (char **env, char *name, char *val) {
 //   return 1;
 // }
-int pwd (char**envp, FILE *f) {
-  for (int i=0;envp[i]!=NULL;i++) {
-    if (envp[i][0] == 'P' && envp[i][1] == 'W' && envp[i][2] == 'D') {
-      int j = 4;
-      while (envp[i][j] != '\0') {
-        fprintf(f, "%c", envp[i][j]);
-        j++;
-      }
-      fprintf(f, "%s", "\n");
-      return 0;
-    }
-  }
-  return 1;
-}
+// int pwd (char**envp, FILE *f) {
+//   for (int i=0;envp[i]!=NULL;i++) {
+//     if (envp[i][0] == 'P' && envp[i][1] == 'W' && envp[i][2] == 'D') {
+//       int j = 4;
+//       while (envp[i][j] != '\0') {
+//         fprintf(f, "%c", envp[i][j]);
+//         j++;
+//       }
+//       fprintf(f, "%s", "\n");
+//       return 0;
+//     }
+//   }
+//   return 1;
+// }
 
 int set (char **env, char *name, char *var) {
     int i;
     int sizeName = strlen(name);
+    char ** result = (char **) malloc(N * sizeof(char **));
+    int nb = 2;
+    for (int i = 0; i < N; i ++)
+        result[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
     for (i=0; env[i]!=NULL; i++) {
-        printf("Alloc :");
-        char **result=(char **)malloc(N*sizeof(char **));
+        int nb = separate(result,env[i],'=', 1);
         printf(" Ok\n");
-        int nb = separate(result,env[i],'=', 2);
+
         if (nb!=2) {
             printf("Probleme avec la fonction separate\n");
-            return -1;
+            freeSeparate(result,nb);
+            return -2;
         }
-        printf("Maybe result : %d\n", i);
-        if (strcmp(name,result[1])==0) {
-            printf("Result\n");
+
+        if (strcmp(name,result[0])==0) {
             free(env[i]);
             env[i] = (char *)malloc(sizeof(char)*(strlen(result[0])+sizeName+strlen(var)+2));
             int k=0;
@@ -141,11 +150,13 @@ int set (char **env, char *name, char *var) {
                 env[i][k] = var[j];
             }
             env[i][k] = '\0';
+            freeSeparate(result,nb);
+            return 1;
         }
-        printf("free :");
-        freeResult(result,N);
-        printf(" Ok\n");
-    }
 
-    return 1;
+    }
+    freeSeparate(result,nb);
+
+    printf("Variable %s inexistante\n",name);
+    return -1;
 }
