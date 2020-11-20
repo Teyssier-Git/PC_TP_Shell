@@ -8,26 +8,19 @@ int separate(char *result[], char *chaine, char separateur) {
     int act_chaine = 0;
     int act_char = 0;
 
-    result[act_chaine] = (char *)malloc(sizeof(char)*act_char);
+    for (int i = 0; i < N; i ++)
+      result[i] = (char *)malloc(sizeof(char)*CHAINE_LENGTH);
 
     for (int i=0; i<size; i++) {
         if (chaine[i] == separateur) {
-            result[act_chaine] = (char *)realloc(result[act_chaine],(act_char+1)*sizeof(char));
-            result[act_chaine][act_char+1] = '\0';
-
             act_chaine++;
             act_char=0;
-            result = (char **)realloc(result,(act_chaine)*sizeof(char *));
-            result[act_chaine] = (char *)malloc(act_char*sizeof(char));
         } else {
-            result[act_chaine] = (char *)realloc(result[act_chaine],(act_char+1)*sizeof(char));
             result[act_chaine][act_char] = chaine[i];
             act_char++;
+            result[act_chaine][act_char] = '\0';
         }
     }
-    result[act_chaine] = (char *)realloc(result[act_chaine],(act_char+1)*sizeof(char));
-    result[act_chaine][act_char+1] = '\0';
-
     return act_chaine+1;
 }
 

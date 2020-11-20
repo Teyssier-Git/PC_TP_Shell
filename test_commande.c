@@ -8,10 +8,9 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    char **result = (char **)malloc(sizeof(char **));
+    char **result = (char **)malloc(N * sizeof(char **));
     int nb = separate(result,argv[1],argv[2][0]);
 
-    printf("%d\n",nb);
     for (int i=0; i<nb; i++) {
         printf("%s\n",result[i]);
     }
