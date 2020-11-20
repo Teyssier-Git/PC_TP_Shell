@@ -2,6 +2,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <errno.h>
+#include <stdlib.h>
 #include "commande.h"
 
 int find_var_env (char **envp, char *nom) {
