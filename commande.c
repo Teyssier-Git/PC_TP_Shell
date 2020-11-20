@@ -3,31 +3,26 @@
 #include <stdlib.h>
 #include "commande.h"
 
-int separate(char **result, char *chaine, char separateur) {
+int separate(char *result[], char *chaine, char separateur) {
     int size = strlen(chaine);
     int act_chaine = 0;
     int act_char = 0;
 
-    // result[0] = (char *)malloc(sizeof(char *));
-
+    result[act_chaine] = (char *)malloc(sizeof(char)*act_char);
 
     for (int i=0; i<size; i++) {
-        for (int k=0; k<act_chaine; k++) {
-            printf("%s-",result[k]);
-        }
-        printf("\n");
         if (chaine[i] == separateur) {
-            // printf("c\n");
             result[act_chaine] = (char *)realloc(result[act_chaine],(act_char+1)*sizeof(char));
             result[act_chaine][act_char+1] = '\0';
-            result = (char **)realloc(result,(act_chaine+1)*sizeof(char **));
+
             act_chaine++;
             act_char=0;
+            result = (char **)realloc(result,(act_chaine)*sizeof(char *));
+            result[act_chaine] = (char *)malloc(act_char*sizeof(char));
         } else {
             result[act_chaine] = (char *)realloc(result[act_chaine],(act_char+1)*sizeof(char));
             result[act_chaine][act_char] = chaine[i];
             act_char++;
-            // printf("b\n");
         }
     }
     result[act_chaine] = (char *)realloc(result[act_chaine],(act_char+1)*sizeof(char));
