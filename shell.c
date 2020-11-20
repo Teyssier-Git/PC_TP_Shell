@@ -41,6 +41,8 @@ int main(int argc, char** argv, char**envp) {
     /* Execution */
     if (0==strcmp(words[0], "pwd"))
         pwd(m_env, stdout);
+    if (0==strcmp(words[0], "print"))
+        print(m_env,words[1],stdout);
     if (0==strcmp(words[0], "set"))
         set(m_env,words[1],words[2]);
     if (0==strcmp(words[0], "env")) {
@@ -53,7 +55,7 @@ int main(int argc, char** argv, char**envp) {
 
     free(words);
     free(line);
-    
+
   }
   return 0;
 }

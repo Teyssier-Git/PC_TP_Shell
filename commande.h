@@ -10,7 +10,7 @@ void ls (void);
 int cd (char **envp,char *name);
 void cp(void);
 int pwd (char**envp, FILE *f);
-void print (void);
+int print (char**envp, char *name, FILE *f);
 int set (char **env, char *name, char *val);
 
 #endif
