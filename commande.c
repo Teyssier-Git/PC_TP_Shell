@@ -70,7 +70,7 @@ int pwd (char**envp, FILE *f) {
     for (int i = 0; i < N; i ++)
       lignes[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
 
-    int n = separate(lignes, envp[i], '=', 1);
+    separate(lignes, envp[i], '=', 1);
     fprintf(f, "%s\n", lignes[1]);
     for (int i = 1; i < N ; i++)
       free(lignes[i]);
@@ -141,7 +141,6 @@ int set (char **env, char *name, char *var) {
         result[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
     for (i=0; env[i]!=NULL; i++) {
         int nb = separate(result,env[i],'=', 1);
-        printf(" Ok\n");
 
         if (nb!=2) {
             printf("Probleme avec la fonction separate\n");

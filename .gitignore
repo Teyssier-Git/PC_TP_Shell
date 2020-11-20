@@ -1,3 +1,4 @@
 *.o
 shell
 *.gch
+test_commande
