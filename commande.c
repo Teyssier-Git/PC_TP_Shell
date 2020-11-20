@@ -175,6 +175,7 @@ int set (char **env, char *name, char *var) {
         char *p1 = strtok(tmp, "=");
 
         if (strcmp(name,p1)==0) {
+            printf("Ok\n");
             free(env[i]);
             env[i] = (char *)malloc(sizeof(char)*(strlen(p1)+sizeName+strlen(var)+2));
 
@@ -194,4 +195,21 @@ int set (char **env, char *name, char *var) {
 
     printf("Variable %s inexistante\n",name);
     return -1;
+}
+
+int print (char**envp, char *name, FILE *f) {
+    int i = find_var_env(envp, name);
+    if (i >= 0) {
+      char ** lignes = (char **) malloc(N * sizeof(char **));
+      for (int i = 0; i < N; i ++)
+        lignes[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
+
+      separate(lignes, envp[i], '=', 1);
+      fprintf(f, "%s\n", lignes[1]);
+      for (int i = 1; i < N ; i++)
+        free(lignes[i]);
+
+      return 0;
+    }
+    return 1;
 }
