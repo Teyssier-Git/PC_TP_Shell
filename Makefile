@@ -1,4 +1,4 @@
-all: test_commande
+all: shell test_commande
 
 GCC_OPT= -Wall -g
 

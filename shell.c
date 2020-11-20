@@ -44,6 +44,7 @@ int main(int argc, char** argv, char**envp) {
 
     free(words);
     free(line);
+    
   }
   return 0;
 }
