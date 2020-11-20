@@ -39,8 +39,11 @@ int main(int argc, char** argv, char**envp) {
     char** words = split_in_words(line);
 
     /* Execution */
-    if (!strcmp(words[0], "pwd"))
-      pwd(m_env, stdout);
+    if (0==strcmp(words[0], "pwd"))
+        pwd(m_env, stdout);
+    if (0==strcmp(words[0], "set")) {
+        set(m_env,words[1],words[2]);
+    }
 
     free(words);
     free(line);

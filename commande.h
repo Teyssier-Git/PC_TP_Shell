@@ -4,7 +4,7 @@
 #define N 512
 #define CHAINE_LENGTH 128
 
-int separate(char **result, char *chaine, char separateur);
+char **separate(int *nb, char *chaine, char separateur, int nbSep);
 
 void ls (void);
 void cd (void);
