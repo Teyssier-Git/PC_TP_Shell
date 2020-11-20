@@ -5,21 +5,15 @@
 #include <stdlib.h>
 #include "commande.h"
 
-// nbSep -> nombre de fois qu'on prend en compte un separatuer
-// nbSep = -1 -> tous les separateurs
-int separate(char **result, char *chaine, char separateur, int nbSep) {
+int separate(char **result, char *chaine, char separateur, int nb_sep) {
     int size = strlen(chaine);
     int act_chaine = 0;
     int act_char = 0;
 
-    // char ** result = (char **) malloc(N * sizeof(char **));
-    // for (int i = 0; i < N; i ++)
-    //   result[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
-
     for (int i=0; i<size; i++) {
-        if ((nbSep!=0) && chaine[i]==separateur) {
+        if ((nb_sep != 0) && (chaine[i] == separateur)) {
             act_chaine++;
-            nbSep--;
+            nb_sep --;
             act_char=0;
         } else {
             result[act_chaine][act_char] = chaine[i];
@@ -30,12 +24,6 @@ int separate(char **result, char *chaine, char separateur, int nbSep) {
     return act_chaine +1;
 }
 
-void freeSeparate(char **result, int nb) {
-    for (int i=0; i<nb; i++) {
-        free(result[i]);
-    }
-    free(result);
-}
 /*
 A changer, copié de dodo le sang
 */
@@ -70,7 +58,7 @@ int pwd (char**envp, FILE *f) {
     for (int i = 0; i < N; i ++)
       lignes[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
 
-    separate(lignes, envp[i], '=', 1);
+    int n = separate(lignes, envp[i], '=', 1);
     fprintf(f, "%s\n", lignes[1]);
     for (int i = 1; i < N ; i++)
       free(lignes[i]);
@@ -81,9 +69,8 @@ int pwd (char**envp, FILE *f) {
 }
 
 
-int cd (char **envp,char *name) {
+int cd (char **envp, char *name) {
   // On découpe le chemin dest
-
   char ** path = (char **) malloc(N * sizeof(char **));
   for (int i = 0; i < N; i ++)
     path[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
@@ -132,42 +119,6 @@ int cd (char **envp,char *name) {
   return 1;
 }
 
-int set (char **env, char *name, char *var) {
-    int i;
-    int sizeName = strlen(name);
-    char ** result = (char **) malloc(N * sizeof(char **));
-    int nb = 2;
-    for (int i = 0; i < N; i ++)
-        result[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
-    for (i=0; env[i]!=NULL; i++) {
-        int nb = separate(result,env[i],'=', 1);
-
-        if (nb!=2) {
-            printf("Probleme avec la fonction separate\n");
-            freeSeparate(result,nb);
-            return -2;
-        }
-
-        if (strcmp(name,result[0])==0) {
-            free(env[i]);
-            env[i] = (char *)malloc(sizeof(char)*(strlen(result[0])+sizeName+strlen(var)+2));
-            int k=0;
-            for (; k<sizeName; k++) {
-                env[i][k] = name[k];
-            }
-            env[i][k] = '=';
-            k++;
-            for (int j=0; var[j]!='\0'; j++, k++) {
-                env[i][k] = var[j];
-            }
-            env[i][k] = '\0';
-            freeSeparate(result,nb);
-            return 1;
-        }
-
-    }
-    freeSeparate(result,nb);
-
-    printf("Variable %s inexistante\n",name);
-    return -1;
+int set (char **env, char *name, char *val) {
+  return 1;
 }
