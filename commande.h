@@ -1,7 +1,7 @@
 #ifndef COMMANDE_H
 #define COMMANDE_H
 #include <stdio.h>
-#define N 512
+#define N 128
 #define CHAINE_LENGTH 128
 
 int separate(char **result, char *chaine, char separateur, int nbSep);

@@ -11,8 +11,19 @@ int main(int argc, char **argv) {
     int nb;
     char **result = separate(&nb,argv[1],argv[2][0], atoi(argv[3]));
 
-    for (int i=0; i<nb; i++) {
-        printf("%s\n",result[i]);
+    while (1) {
+      char ** lignes = (char **) malloc(N * sizeof(char **));
+      for (int i = 0; i < N; i ++)
+        lignes[i] = (char*) malloc(sizeof(char) * CHAINE_LENGTH);
+
+      int nb = separate(lignes,argv[1],argv[2][0], -1);
+
+      for (int i=0; i<nb; i++) {
+          printf("%s\n",lignes[i]);
+      }
+
+      for (int i = 0; i < N; i++)
+        free(lignes[i]);
     }
 
     return 0;
