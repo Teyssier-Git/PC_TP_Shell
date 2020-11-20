@@ -5,64 +5,75 @@
 #include <stdlib.h>
 #include "commande.h"
 
-int find_var_env (char **envp, char *nom) {
-  char **ligne;
-  for (int i = 0; envp[i]!=NULL; i++) {
-    ligne = separate(envp[i], '=');
-    if (!strcmp(envp[i], nom)) {
-      return i;
+char ** separate(int* nb_split, char *chaine, char separateur) {
+    int size = strlen(chaine);
+    int act_chaine = 0;
+    int act_char = 0;
+    char result[N][CHAINE_LENGTH];
+    for (int i=0; i<size; i++) {
+        if (chaine[i] == separateur) {
+            act_chaine++;
+            act_char=0;
+        } else {
+            result[act_chaine][act_char] = chaine[i];
+            act_char++;
+            result[act_chaine][act_char] = '\0';
+        }
     }
+    *nb_split = act_chaine +1;
+    return result;
+}
+
+int find_var_env (char **envp, char *nom) {
+  char ligne[N][CHAINE_LENGTH];
+  for (int i = 0; envp[i] != NULL; i++) {
+    separate(ligne, envp[i], '=');
+    if (strcmp(ligne[i], nom) == 0)
+      return i;
   }
   return -1;
 }
 
 int pwd (char**envp, FILE *f) {
+  printf("A\n");
   int i = find_var_env(envp, "PWD");
+  printf("B\n");
   if (i >= 0) {
-    char **ligne = separate(envp[i], "=");
-    for (int i = 0; ligne[1][i] != '\0'; i ++)
-      fprintf(f, "%c", envp[i][j]);
-    fprintf(f, "%s", "\n");
+    char ligne[N][CHAINE_LENGTH];
+    separate(ligne, envp[i], '/');
+    fprintf(f, "%s\n", ligne[1]);
     return 0;
   }
   return 1;
 }
-/*
-int set (char* name, char**envp) {
-    for (int i=0;envp[i]!=NULL;i++) {
-        int
-        char *tmp[];
-        for (int j=0; envp[i][j] != '='; j++) {
 
-        }
-        if (strcmp(name,tmp)) {
-
-        }
-    }
-
-    printf("\n");
-
-}
-*/
 
 int cd (char **envp,char *name) {
-  char **path = separate(name, '/');
-  for (int act_dir = 0; path[act_dir] != NULL; act_dir ++) {
-    if (path[act_dir] == "..") {
+  // On découpe le chemin dest
+  char path[N][CHAINE_LENGTH];
+  int nb_dir = separate(path, name, '/');
 
-    } else if (path[act_dir] == "~") {
-      int indice_pwd = find_var_env(envp, "PWD");
-      char *old _pwd= separate(envp[indice_pwd], "=")[1];
+  char get[N][CHAINE_LENGTH];
+  for (int act_dir = 0; act_dir < nb_dir; act_dir ++) {
+    if (strcmp(path[act_dir], "..") == 0) {
+      separate(get, envp[find_var_env(envp, "OLDPWD")], '=');
+      set(envp, "PWD", get[1]);
+    } else if (strcmp(path[act_dir], "~") == 0) {
+      //le ~ est forcément au début
+      if (act_dir == 0) {
+        separate(get, envp[find_var_env(envp, "HOME")], '=');
+        set(envp, "PWD", get[1]);
+      } else {
+        printf("bash: cd : %s no such file or directory\n", name);
+      }
     } else {
       DIR* dir = opendir(path[act_dir]);
       if (dir) {
-          int indice_pwd = find_var_env(envp, "PWD");
-          char *old _pwd= separate(envp[indice_pwd], "=")[1];
-          char *new_pwd = (char *) malloc(sizeof(char) * (strlen(old_pwd) + 1 + strlen(path[act_dir]));
-          int size_old_pwd = strlen(old_pwd);
-          new_pwd = strncpy (new_pwd,old_pwd, size_old_pwd);
-          new_pwd = strncpy (new_pwd + size_old_pwd ,"/", 1);
-          new_pwd = strncpy (new_pwd + size_old_pwd + 1,path[act_dir], strlen(path[act_dir]));
+          separate(get, envp[find_var_env(envp, "PWD")], '=');
+          char new_pwd[CHAINE_LENGTH];
+          strcpy(new_pwd, get[1]);
+          new_pwd[strlen(get[1])] = '/';
+          strcpy(new_pwd + strlen(get[1]) + 1, path[act_dir]);
           set(envp, "PWD", new_pwd);
           closedir(dir);
           return 0;
@@ -75,5 +86,9 @@ int cd (char **envp,char *name) {
 
   }
 
+  return 1;
+}
+
+int set (char **env, char *name, char *val) {
   return 1;
 }
