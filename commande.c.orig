@@ -1,0 +1,128 @@
+#include <stdio.h>
+#include <string.h>
+<<<<<<< HEAD
+#include <dirent.h>
+#include <errno.h>
+#include <stdlib.h>
+#include "commande.h"
+
+int find_var_env (char **envp, char *nom) {
+  char **ligne;
+  for (int i = 0; envp[i]!=NULL; i++) {
+    ligne = separate(envp[i], '=');
+    if (!strcmp(envp[i], nom)) {
+      return i;
+=======
+#include <stdlib.h>
+#include "commande.h"
+
+int separate(char *result[], char *chaine, char separateur) {
+    int size = strlen(chaine);
+    int act_chaine = 0;
+    int act_char = 0;
+
+    for (int i = 0; i < N; i ++)
+      result[i] = (char *)malloc(sizeof(char)*CHAINE_LENGTH);
+
+    for (int i=0; i<size; i++) {
+        if (chaine[i] == separateur) {
+            act_chaine++;
+            act_char=0;
+        } else {
+            result[act_chaine][act_char] = chaine[i];
+            act_char++;
+            result[act_chaine][act_char] = '\0';
+        }
+    }
+    return act_chaine+1;
+}
+
+int pwd (char**envp, FILE *f) {
+  for (int i=0;envp[i]!=NULL;i++) {
+    if (envp[i][0] == 'P' && envp[i][1] == 'W' && envp[i][2] == 'D') {
+      int j = 4;
+      while (envp[i][j] != '\0') {
+        fprintf(f, "%c", envp[i][j]);
+        j++;
+      }
+      fprintf(f, "%s", "\n");
+      return 0;
+>>>>>>> master
+    }
+  }
+  return -1;
+}
+
+int pwd (char**envp, FILE *f) {
+  int i = find_var_env(envp, "PWD");
+  if (i >= 0) {
+    char **ligne = separate(envp[i], "=");
+    for (int i = 0; ligne[1][i] != '\0'; i ++)
+      fprintf(f, "%c", envp[i][j]);
+    fprintf(f, "%s", "\n");
+    return 0;
+  }
+  return 1;
+}
+
+<<<<<<< HEAD
+        }
+        if (strcmp(name,tmp)) {
+
+        }
+    }
+
+    printf("\n");
+
+}
+*/
+
+int cd (char **envp,char *name) {
+  char **path = separate(name, '/');
+  for (int act_dir = 0; path[act_dir] != NULL; act_dir ++) {
+    if (path[act_dir] == "..") {
+
+    } else if (path[act_dir] == "~") {
+      int indice_pwd = find_var_env(envp, "PWD");
+      char *old _pwd= separate(envp[indice_pwd], "=")[1];
+    } else {
+      DIR* dir = opendir(path[act_dir]);
+      if (dir) {
+          int indice_pwd = find_var_env(envp, "PWD");
+          char *old _pwd= separate(envp[indice_pwd], "=")[1];
+          char *new_pwd = (char *) malloc(sizeof(char) * (strlen(old_pwd) + 1 + strlen(path[act_dir]));
+          int size_old_pwd = strlen(old_pwd);
+          new_pwd = strncpy (new_pwd,old_pwd, size_old_pwd);
+          new_pwd = strncpy (new_pwd + size_old_pwd ,"/", 1);
+          new_pwd = strncpy (new_pwd + size_old_pwd + 1,path[act_dir], strlen(path[act_dir]));
+          set(envp, "PWD", new_pwd);
+          closedir(dir);
+          return 0;
+      } else if (ENOENT == errno) {
+          printf("bash: cd: %s: No such file or directory\n", name);
+      } else {
+          /* opendir() failed for some other reason. */
+      }
+    }
+
+  }
+
+  return 1;
+}
+=======
+// int set (char **env, char *name, char *var) {
+//     int i;
+//     int sizeName = strlen(name);
+//     for (i=0; env[i]!=NULL; i++) {
+//         for (int j=0; envp[i][j] != '=' && envp[i][j] != '\0'; j++) {
+//
+//         }
+//         if (strcmp(name,tmp)) {
+//
+//         }
+//     }
+//
+//     printf("\n");
+//
+// }
+>>>>>>> master
