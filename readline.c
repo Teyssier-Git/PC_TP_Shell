@@ -74,13 +74,13 @@ char **split_in_words(char *line) {
 			cur++;
 			break;
 		default:
-			/* Another word */
-			start = cur;
-      if (c=='"') {
-        c = *++cur;
-        while (c!='"')
-          c = *++cur;
-        cur++;
+        /* Another word */
+        start = cur;
+       if (c=='"') {
+            c = *++cur;
+            while (c != 0 && c!='"') //la
+                c = *++cur;
+            cur++;
       } else {
         while (c) {
           c = *++cur;

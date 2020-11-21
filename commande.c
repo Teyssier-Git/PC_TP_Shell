@@ -298,6 +298,18 @@ int grep(char**envp, char **words) {
             perror("fork : grep");
             return -1;
         case 0:
+            for (int i=0; words[i]!=NULL; i++) {
+                if (words[i][0] == '"') {
+                    int size = strlen(words[i]);
+                    if (words[i][size-1] == '"') {
+                        int k=0;
+                        for (; k<size-2; k++) {
+                            words[i][k] = words[i][k+1];
+                        }
+                        words[i][k] = '\0';
+                    }
+                }
+            }
             execve("/bin/grep", words, envp);
             break;
         default:
