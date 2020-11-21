@@ -209,3 +209,20 @@ int set (char **env, char *name, char *var) {
     printf("Variable %s inexistante\n",name);
     return -1;
 }
+
+
+int print (char**envp, char *name, int n, FILE *f) {
+      int i = find_var_env(envp, name);
+      if (i >= 0) {
+        int nb;
+        char **lignes = separate(&nb, envp[i], "=", -1);
+
+        fprintf(f, "%s", lignes[1]);
+        if (n==0)
+          fprintf(f, "%s", "\n");
+
+        freeSeparate(lignes, nb);
+        return 0;
+      }
+      return 1;
+}
