@@ -140,7 +140,9 @@ int cd (char **envp, char *name) {
       }
       newPWD[act] = '\0';
       //On set le new PWD
+      set(envp, "OLDPWD", separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1)[1]);
       set(envp, "PWD", newPWD);
+      chdir(newPWD);
       freeSeparate(get, nget);
 
     } else if (strcmp(path[act_dir], "~") == 0) {
@@ -148,10 +150,12 @@ int cd (char **envp, char *name) {
       if (act_dir == 0) {
         int nget;
         char ** get = separate(&nget, envp[find_var_env(envp, "HOME")], "=", -1);
+        set(envp, "OLDPWD", separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1)[1]);
         char t[CHAINE_LENGTH];
         strcpy(t, get[1]);
         freeSeparate(get, nget);
         set(envp, "PWD", t);
+        chdir(t);
       } else {
         //On a lu un ~ au milieu du chemin donné, erreur
         printf("bash: cd : %s no such file or directory\n", name);
@@ -160,18 +164,20 @@ int cd (char **envp, char *name) {
       // On tente d'ouvrir le chemin du dossier
       int nget;
       char ** get = separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1);
-      char new_pwd[CHAINE_LENGTH];
-      strcpy(new_pwd, get[1]);
-      new_pwd[strlen(get[1])] = '/';
-      strcpy(new_pwd + strlen(get[1]) + 1, path[act_dir]);
+      char newPWD[CHAINE_LENGTH];
+      strcpy(newPWD, get[1]);
+      newPWD[strlen(get[1])] = '/';
+      strcpy(newPWD + strlen(get[1]) + 1, path[act_dir]);
       freeSeparate(get, nget);
 
-      DIR* dir = opendir(new_pwd);
+      DIR* dir = opendir(newPWD);
       if (dir != NULL) {
-          set(envp, "PWD", new_pwd);
+          set(envp, "OLDPWD", separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1)[1]);
+          set(envp, "PWD", newPWD);
+          chdir(newPWD);
           closedir(dir);
       } else if (ENOENT == errno) {
-          printf("bash Dir: cd: %s: No such file or directory\n", new_pwd);
+          printf("bash Dir: cd: %s: No such file or directory\n", newPWD);
       } else {
           /* opendir() failed for some other reason. */
       }
