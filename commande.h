@@ -18,7 +18,7 @@ int cd (char **envp,char *name);
 void cp(void);
 int pwd (char**envp, FILE *f, int n);
 int print (char**envp, char *name, int n, FILE *f);
-int set (char **env, char *name, char *val);
+int set (char **env, char *name, char *var);
 int ls(char **words, char**envp);
 
 int cat (char **env, char **words);
