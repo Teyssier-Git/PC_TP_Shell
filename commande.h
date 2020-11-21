@@ -21,4 +21,6 @@ int print (char**envp, char *name, int n, FILE *f);
 int set (char **env, char *name, char *val);
 int ls(char **words, char**envp);
 
+int cat (char **env, char **words);
+
 #endif

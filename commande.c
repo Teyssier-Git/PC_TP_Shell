@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <string.h>
+#include <dirent.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "commande.h"
 
 /*
@@ -252,4 +260,23 @@ int ls(char **words, char**envp) {
         perror("waitpid: ls");
       break;
   }
+}
+
+int cat(char**envp, char **words) {
+    int pid = fork();
+    int status;
+    switch (pid) {
+        case -1:
+            perror("fork : cat");
+            return -1;
+            break;
+        case 0:
+            execve("/bin/cat", words, envp);
+            break;
+        default:
+            if (-1==waitpid(pid, &status,0))
+                perror("waitpid: cat");
+            break;
+        }
+    return 0;
 }

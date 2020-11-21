@@ -51,6 +51,9 @@ int main(int argc, char** argv, char**envp) {
     if (0==strcmp(words[0], "ls")) {
       ls(words, m_env);
     }
+    if (0==strcmp(words[0],"cat")) {
+        cat(m_env,words);
+    }
 
     free(words);
     free(line);
