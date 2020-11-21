@@ -24,5 +24,6 @@ int ls(char**envp, char **words);
 int cat (char **env, char **words);
 int more(char**envp, char **words);
 int grep(char**envp, char **words);
+int externCommands(char**envp, char **words);
 
 #endif

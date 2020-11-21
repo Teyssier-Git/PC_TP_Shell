@@ -319,3 +319,43 @@ int grep(char**envp, char **words) {
         }
     return 0;
 }
+
+int externCommands(char**envp, char **words) {
+    int pid = fork();
+    int status;
+    if (pid == -1) {
+        perror("fork : ");
+        return -1;
+    }
+    if (pid == 0) {
+        /* transforme "..." -> ... */
+        for (int i=0; words[i]!=NULL; i++) {
+            if (words[i][0] == '"') {
+                int size = strlen(words[i]);
+                if (words[i][size-1] == '"') {
+                    int k=0;
+                    for (; k<size-2; k++) {
+                        words[i][k] = words[i][k+1];
+                    }
+                    words[i][k] = '\0';
+                }
+            }
+        }
+
+        /* créé /bin/... */
+        char comm[6+strlen(words[0])];
+        char tmp[] = "/bin/";
+        for (int i=0; i<7; i++) {
+            comm[i] = tmp[i];
+        }
+        strcat(comm,words[0]);
+
+        execve(comm, words, envp);
+        return 0;
+    }
+    if (-1==waitpid(pid, &status,0)) {
+        perror("waitpid: ");
+        return -1;
+    }
+    return 0;
+}
