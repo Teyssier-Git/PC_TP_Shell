@@ -12,10 +12,15 @@ retourn un tableau contenant les éléments séparés
 
 */
 char ** separate(int *bn, char *chaine, char *sep, int nb_sep) {
-
+  /*
+  On copie la chaine passé en arguments
+  */
   char *cchaine = (char * ) malloc(sizeof(char) * CHAINE_LENGTH);
   strcpy(cchaine, chaine);
 
+  /*
+  On compte le nombre d'éléments séparés dans la chaine
+  */
   int nTotalItems = 0;
   char *buffer = strtok(cchaine, sep);
   int tmb_sep = nb_sep;
@@ -25,6 +30,9 @@ char ** separate(int *bn, char *chaine, char *sep, int nb_sep) {
     nb_sep --;
   } while ((nb_sep !=0) && ((buffer=strtok(NULL, sep))!= NULL));
 
+  /*
+  On réinitialise le buffer
+  */
   char** strArray = malloc( nTotalItems * sizeof( char* ));
   int    nIndex  = 0;
 
@@ -34,13 +42,11 @@ char ** separate(int *bn, char *chaine, char *sep, int nb_sep) {
   nb_sep = tmb_sep;
 
   do {
-
      // allocate the buffer for string and copy...
      strArray[ nIndex ] = malloc( strlen( buffer ) + 1 );
      strcpy( strArray[ nIndex ], buffer );
      nb_sep --;
      nIndex++;
-
    } while ((nb_sep !=0) && ((buffer=strtok(NULL, sep))!= NULL));
 
   *bn = nTotalItems;
@@ -106,16 +112,21 @@ int cd (char **envp, char *name) {
   int nb_dir;
   char ** path = separate(&nb_dir, name, "/", -1);
 
-
   for (int act_dir = 0; act_dir < nb_dir; act_dir ++) {
+    //on lit un ..
     if (strcmp(path[act_dir], "..") == 0) {
       int nget;
       int tmp;
+      /*
+      On récupere le PWD et on le découpe
+      */
       char ** get = separate(&nget, separate(&tmp, envp[find_var_env(envp, "PWD")], "=", -1)[1], "/", -1);
       int n = 0;
       for (int k = 0; k < nget-1; k++)
         n+=strlen(get[k]) + 1;
-
+      /*
+      On reconstruit le new PWD en enlevant le dernier élément de l'ancien PWD
+      */
       char newPWD[n];
       char act = 0;
       for (int k = 0; k < nget-1; k++) {
@@ -125,6 +136,7 @@ int cd (char **envp, char *name) {
         act += strlen(get[k]);
       }
       newPWD[act] = '\0';
+      //On set le new PWD
       set(envp, "PWD", newPWD);
       freeSeparate(get, nget);
 
@@ -138,9 +150,11 @@ int cd (char **envp, char *name) {
         freeSeparate(get, nget);
         set(envp, "PWD", t);
       } else {
+        //On a lu un ~ au milieu du chemin donné, erreur
         printf("bash: cd : %s no such file or directory\n", name);
       }
     } else {
+      // On tente d'ouvrir le chemin du dossier
       int nget;
       char ** get = separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1);
       char new_pwd[CHAINE_LENGTH];
