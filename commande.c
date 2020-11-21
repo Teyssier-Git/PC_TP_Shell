@@ -230,3 +230,51 @@ int externCommands(char**envp, char **words) {
     }
     return 0;
 }
+
+#define READ_END 0
+#define WRITE_END 1
+
+int pipeCommands(char**envp, char **words, int sep) {
+    int pipefd[2];
+    pipe(pipefd);
+    int status;
+    words[sep] = NULL;
+
+    int pid = fork();
+    switch(pid) {
+        case -1: /* error */
+            perror("panic: ");
+            break;
+        case 0: /* child code */
+            close(pipefd[WRITE_END]);
+            dup2(pipefd[READ_END],STDIN_FILENO);
+            externCommands(envp,words); //premiere partie
+
+            close(pipefd[READ_END]);
+            break;
+        default: /* parent code */
+            if (-1==waitpid(pid, &status,0)) {
+                perror("waitpid: ");
+                return -1;
+            }
+            close(pipefd[READ_END]);
+            dup2(pipefd[WRITE_END],STDOUT_FILENO);
+            execCommands(envp,words+sep+1); // deuxieme partie
+
+            close(pipefd[WRITE_END]);
+            break;
+    }
+    return 0;
+}
+
+int execCommands(char**envp, char **words) {
+    int i=0;
+    while (words[i]!=NULL) {
+        if (0==strcmp(words[i],"|")) {
+            pipeCommands(envp,words,i);
+            return 1;
+        }
+        i++;
+    }
+    externCommands(envp,words);
+}

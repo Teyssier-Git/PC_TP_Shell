@@ -48,7 +48,7 @@ int main(int argc, char** argv, char**envp) {
         }
         printf("\n");
     } else {
-        externCommands(m_env,words);
+        execCommands(m_env,words);
     }
 
 
