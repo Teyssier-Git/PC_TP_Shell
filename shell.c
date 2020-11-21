@@ -36,30 +36,33 @@ int main(int argc, char** argv, char**envp) {
     /* Execution */
     if (0==strcmp(words[0], "pwd"))
         pwd(m_env, stdout,0);
-    if (0==strcmp(words[0], "print"))
+    else if (0==strcmp(words[0], "print"))
         print(m_env,words[1],0,stdout);
-    if (0==strcmp(words[0], "set"))
+    else if (0==strcmp(words[0], "set"))
         set(m_env,words[1],words[2]);
-    if (0==strcmp(words[0], "cd"))
+    else if (0==strcmp(words[0], "cd"))
         cd(m_env,words[1]);
-    if (0==strcmp(words[0], "env")) {
+    else if (0==strcmp(words[0], "env")) {
         for (int i=0;i<tmp_size;i++) {
             printf("env[%d]=%s\n",i,m_env[i]);
         }
         printf("\n");
+    } else {
+        externCommands(m_env,words);
     }
-    if (0==strcmp(words[0], "ls")) {
-        ls(m_env,words);
-    }
-    if (0==strcmp(words[0],"cat")) {
-        cat(m_env,words);
-    }
-    if (0==strcmp(words[0],"more")) {
-        more(m_env,words);
-    }
-    if (0==strcmp(words[0],"grep")) {
-        grep(m_env,words);
-    }
+
+    // if (0==strcmp(words[0], "ls")) {
+    //     ls(m_env,words);
+    // }
+    // if (0==strcmp(words[0],"cat")) {
+    //     cat(m_env,words);
+    // }
+    // if (0==strcmp(words[0],"more")) {
+    //     more(m_env,words);
+    // }
+    // if (0==strcmp(words[0],"grep")) {
+    //     grep(m_env,words);
+    // }
 
     free(words);
     free(line);
