@@ -20,7 +20,6 @@ int pwd (char**envp, FILE *f, int n);
 int print (char**envp, char *name, int n, FILE *f);
 int set (char **env, char *name, char *val);
 int externCommands(char**envp, char **words);
-int pipeCommands(char**envp, char **words, int sep);
 int execCommands(char**envp, char **words);
 
 #endif

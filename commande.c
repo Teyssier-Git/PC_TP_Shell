@@ -220,7 +220,6 @@ int externCommands(char**envp, char **words) {
             comm[i] = tmp[i];
         }
         strcat(comm,words[0]);
-
         execve(comm, words, envp);
         return 0;
     }
@@ -231,50 +230,66 @@ int externCommands(char**envp, char **words) {
     return 0;
 }
 
-#define READ_END 0
-#define WRITE_END 1
+typedef struct ins_ {
+  char *cmd;
+  char **args;
+  int input;
+  int output;
+} ins;
 
-int pipeCommands(char**envp, char **words, int sep) {
-    int pipefd[2];
-    pipe(pipefd);
-    int status;
-    words[sep] = NULL;
+typedef struct listeIns_ {
+  ins ins_act;
+  struct listeIns_ *ins_suiv;
+}listeIns;
 
-    int pid = fork();
-    switch(pid) {
-        case -1: /* error */
-            perror("panic: ");
-            break;
-        case 0: /* child code */
-            close(pipefd[WRITE_END]);
-            dup2(pipefd[READ_END],STDIN_FILENO);
-            externCommands(envp,words); //premiere partie
-
-            close(pipefd[READ_END]);
-            break;
-        default: /* parent code */
-            if (-1==waitpid(pid, &status,0)) {
-                perror("waitpid: ");
-                return -1;
-            }
-            close(pipefd[READ_END]);
-            dup2(pipefd[WRITE_END],STDOUT_FILENO);
-            execCommands(envp,words+sep+1); // deuxieme partie
-
-            close(pipefd[WRITE_END]);
-            break;
-    }
-    return 0;
-}
+#define	READ_END	0
+#define	WRITE_END	1
 
 int execCommands(char**envp, char **words) {
-    int i=0;
-    while (words[i]!=NULL) {
-        if (0==strcmp(words[i],"|")) {
-            pipeCommands(envp,words,i);
-            return 1;
-        }
-        i++;
+  int i = 0;
+  listeIns *head = (listeIns*)malloc(sizeof(listeIns*));
+  int fd[2];
+
+  listeIns *actLis = head;
+  head->ins_act.input = -1;
+  while (words[i] != NULL) {
+    actLis->ins_act.cmd = words[i];
+    i++;
+    actLis->ins_act.args = words + i;
+    while ((words[i] != NULL) && (words[i][0] != '|')){
+      i++;
     }
-    externCommands(envp,words);
+    if (words[i] != NULL) {
+      words[i] = NULL;
+      actLis->ins_suiv = (listeIns *) malloc(sizeof(listeIns*));
+      pipe(fd);
+      actLis->ins_act.output = fd[WRITE_END];
+      actLis->ins_suiv->ins_act.input = fd[READ_END];
+      actLis = actLis->ins_suiv;
+    } else {
+      actLis->ins_suiv = NULL;
+      actLis->ins_act.output = STDOUT_FILENO;
+    }
+    i++;
+  }
+
+  while (head != NULL) {
+    int childPID = fork();
+    if (childPID < 0)
+      exit(-1);
+    if (childPID == 0) {
+      if (head->ins_act.input != -1)
+        dup2(head->ins_act.input, STDIN_FILENO);
+      dup2(head->ins_act.output, STDOUT_FILENO);
+      execve(head->ins_act.cmd, head->ins_act.args, envp);
+      free(head->ins_suiv);
+      free(head);
+      return 1;
+    } else {
+      close(fd[READ_END]);
+      close(fd[WRITE_END]);
+      head = head->ins_suiv;
+    }
+  }
+  return 1;
 }

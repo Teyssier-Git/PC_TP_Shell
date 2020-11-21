@@ -30,9 +30,12 @@ int main(int argc, char** argv, char**envp) {
     pwd(m_env, stdout, 1);
     printf("> ");
     fflush(stdout);
-    char *line = readline();
-    char** words = split_in_words(line);
-
+    char *line;
+    char** words;
+    do {
+      line = readline();
+      words = split_in_words(line);
+    } while(words[0] == NULL);
     /* Execution */
     if (0==strcmp(words[0], "pwd"))
         pwd(m_env, stdout,0);
