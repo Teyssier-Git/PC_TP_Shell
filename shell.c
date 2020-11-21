@@ -49,10 +49,16 @@ int main(int argc, char** argv, char**envp) {
         printf("\n");
     }
     if (0==strcmp(words[0], "ls")) {
-      ls(words, m_env);
+        ls(m_env,words);
     }
     if (0==strcmp(words[0],"cat")) {
         cat(m_env,words);
+    }
+    if (0==strcmp(words[0],"more")) {
+        more(m_env,words);
+    }
+    if (0==strcmp(words[0],"grep")) {
+        grep(m_env,words);
     }
 
     free(words);

@@ -19,8 +19,10 @@ void cp(void);
 int pwd (char**envp, FILE *f, int n);
 int print (char**envp, char *name, int n, FILE *f);
 int set (char **env, char *name, char *val);
-int ls(char **words, char**envp);
 
+int ls(char**envp, char **words);
 int cat (char **env, char **words);
+int more(char**envp, char **words);
+int grep(char**envp, char **words);
 
 #endif
