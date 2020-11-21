@@ -111,80 +111,23 @@ int pwd (char**envp, FILE *f, int n) {
 
 
 int cd (char **envp, char *name) {
-  // On découpe le chemin dest
-  int nb_dir;
-  char ** path = separate(&nb_dir, name, "/", -1);
-
-  for (int act_dir = 0; act_dir < nb_dir; act_dir ++) {
-    //on lit un ..
-    if (strcmp(path[act_dir], "..") == 0) {
-      int nget;
-      int tmp;
-      /*
-      On récupere le PWD et on le découpe
-      */
-      char ** get = separate(&nget, separate(&tmp, envp[find_var_env(envp, "PWD")], "=", -1)[1], "/", -1);
-      int n = 0;
-      for (int k = 0; k < nget-1; k++)
-        n+=strlen(get[k]) + 1;
-      /*
-      On reconstruit le new PWD en enlevant le dernier élément de l'ancien PWD
-      */
-      char newPWD[n];
-      char act = 0;
-      for (int k = 0; k < nget-1; k++) {
-        newPWD[act] = '/';
-        act++;
-        strcpy(newPWD + act, get[k]);
-        act += strlen(get[k]);
-      }
-      newPWD[act] = '\0';
-      //On set le new PWD
-      set(envp, "OLDPWD", separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1)[1]);
-      set(envp, "PWD", newPWD);
-      chdir(newPWD);
-      freeSeparate(get, nget);
-
-    } else if (strcmp(path[act_dir], "~") == 0) {
-      //le ~ est forcément au début
-      if (act_dir == 0) {
-        int nget;
-        char ** get = separate(&nget, envp[find_var_env(envp, "HOME")], "=", -1);
-        set(envp, "OLDPWD", separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1)[1]);
-        char t[CHAINE_LENGTH];
-        strcpy(t, get[1]);
-        freeSeparate(get, nget);
-        set(envp, "PWD", t);
-        chdir(t);
-      } else {
-        //On a lu un ~ au milieu du chemin donné, erreur
-        printf("bash: cd : %s no such file or directory\n", name);
-      }
-    } else {
-      // On tente d'ouvrir le chemin du dossier
-      int nget;
-      char ** get = separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1);
-      char newPWD[CHAINE_LENGTH];
-      strcpy(newPWD, get[1]);
-      newPWD[strlen(get[1])] = '/';
-      strcpy(newPWD + strlen(get[1]) + 1, path[act_dir]);
-      freeSeparate(get, nget);
-
-      DIR* dir = opendir(newPWD);
-      if (dir != NULL) {
-          set(envp, "OLDPWD", separate(&nget, envp[find_var_env(envp, "PWD")], "=", -1)[1]);
-          set(envp, "PWD", newPWD);
-          chdir(newPWD);
-          closedir(dir);
-      } else if (ENOENT == errno) {
-          printf("bash Dir: cd: %s: No such file or directory\n", newPWD);
-      } else {
-          /* opendir() failed for some other reason. */
-      }
-    }
-
+  int nb_oldPWD;
+  char **oldPWD = separate(&nb_oldPWD, envp[find_var_env(envp, "PWD")], "=", -1);
+  if (strcmp(name, "~") == 0) {
+    int nb_tmp;
+    char **tmp = separate(&nb_tmp, envp[find_var_env(envp, "HOME")], "=", -1);
+    strcpy(name,tmp[1]);
+    freeSeparate(tmp, nb_tmp);
   }
-  freeSeparate(path, nb_dir);
+  if (!chdir(name)) {
+    char *newPWD = getcwd(NULL, 0);
+    set(envp, "PWD", newPWD);
+    set(envp, "OLDPWD", oldPWD[1]);
+    free(newPWD);
+  } else {
+    printf("BASH : cd : %s no such file or firectory\n", name);
+  }
+  freeSeparate(oldPWD, nb_oldPWD);
   return 1;
 }
 
