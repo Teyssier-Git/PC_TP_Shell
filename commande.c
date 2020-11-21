@@ -252,12 +252,11 @@ int execCommands(char**envp, char **words) {
     head->input = -1;
     while (words[i] != NULL) {
         actLis->cmd = words[i];
-        i++;
         actLis->args = words + i;
+        i++;
         while ((words[i] != NULL) && (words[i][0] != '|')){
             i++;
         }
-        // actLis->args[i] = NULL;
         if (words[i] != NULL) {
             words[i] = NULL;
             actLis->ins_suiv = (ins *) malloc(sizeof(ins));
@@ -282,10 +281,6 @@ int execCommands(char**envp, char **words) {
                 dup2(head->input, STDIN_FILENO);
             }
             dup2(head->output, STDOUT_FILENO);
-            printf("%p\n%s\n%p\n",head,head->cmd,head->args[0]);
-            for (int k=0; head->args[k] != NULL; k++) {
-                printf("%s\n", head->args[k]);
-            }
             char comm[6+strlen(words[0])];
             char tmp[] = "/bin/";
             for (int i=0; i<7; i++) {
