@@ -181,6 +181,7 @@ int print (char**envp, char *name, int n, FILE *f) {
 
 int externCommands(char**envp, char **words) {
     int pid = fork();
+    // printf("%s : %d\n",words[0],pid);
     int status;
 
     int opt = 0;
@@ -201,6 +202,7 @@ int externCommands(char**envp, char **words) {
     if (pid == 0) {
         /* transforme "..." -> ... */
         for (int i=0; words[i]!=NULL; i++) {
+            // printf("%s\n",words[i]);
             if (words[i][0] == '"') {
                 int size = strlen(words[i]);
                 if (words[i][size-1] == '"') {
@@ -235,61 +237,73 @@ typedef struct ins_ {
   char **args;
   int input;
   int output;
+  struct ins_ *ins_suiv;
 } ins;
-
-typedef struct listeIns_ {
-  ins ins_act;
-  struct listeIns_ *ins_suiv;
-}listeIns;
 
 #define	READ_END	0
 #define	WRITE_END	1
 
 int execCommands(char**envp, char **words) {
-  int i = 0;
-  listeIns *head = (listeIns*)malloc(sizeof(listeIns*));
-  int fd[2];
+    int i = 0;
+    ins *head = (ins *)malloc(sizeof(ins));
+    int fd[2];
 
-  listeIns *actLis = head;
-  head->ins_act.input = -1;
-  while (words[i] != NULL) {
-    actLis->ins_act.cmd = words[i];
-    i++;
-    actLis->ins_act.args = words + i;
-    while ((words[i] != NULL) && (words[i][0] != '|')){
-      i++;
+    ins *actLis = head;
+    head->input = -1;
+    while (words[i] != NULL) {
+        actLis->cmd = words[i];
+        i++;
+        actLis->args = words + i;
+        while ((words[i] != NULL) && (words[i][0] != '|')){
+            i++;
+        }
+        // actLis->args[i] = NULL;
+        if (words[i] != NULL) {
+            words[i] = NULL;
+            actLis->ins_suiv = (ins *) malloc(sizeof(ins));
+            pipe(fd);
+            actLis->output = fd[WRITE_END];
+            actLis->ins_suiv->input = fd[READ_END];
+            actLis = actLis->ins_suiv;
+        } else {
+            actLis->ins_suiv = NULL;
+            actLis->output = STDOUT_FILENO;
+        }
+        i++;
     }
-    if (words[i] != NULL) {
-      words[i] = NULL;
-      actLis->ins_suiv = (listeIns *) malloc(sizeof(listeIns*));
-      pipe(fd);
-      actLis->ins_act.output = fd[WRITE_END];
-      actLis->ins_suiv->ins_act.input = fd[READ_END];
-      actLis = actLis->ins_suiv;
-    } else {
-      actLis->ins_suiv = NULL;
-      actLis->ins_act.output = STDOUT_FILENO;
-    }
-    i++;
-  }
 
-  while (head != NULL) {
-    int childPID = fork();
-    if (childPID < 0)
-      exit(-1);
-    if (childPID == 0) {
-      if (head->ins_act.input != -1)
-        dup2(head->ins_act.input, STDIN_FILENO);
-      dup2(head->ins_act.output, STDOUT_FILENO);
-      execve(head->ins_act.cmd, head->ins_act.args, envp);
-      free(head->ins_suiv);
-      free(head);
-      return 1;
-    } else {
-      close(fd[READ_END]);
-      close(fd[WRITE_END]);
-      head = head->ins_suiv;
+    while (head != NULL) {
+        int childPID = fork();
+        if (childPID < 0) {
+            exit(-1);
+        }
+        if (childPID == 0) {
+            if (head->input != -1) {
+                dup2(head->input, STDIN_FILENO);
+            }
+            dup2(head->output, STDOUT_FILENO);
+            printf("%p\n%s\n%p\n",head,head->cmd,head->args[0]);
+            for (int k=0; head->args[k] != NULL; k++) {
+                printf("%s\n", head->args[k]);
+            }
+            char comm[6+strlen(words[0])];
+            char tmp[] = "/bin/";
+            for (int i=0; i<7; i++) {
+                comm[i] = tmp[i];
+            }
+            strcat(comm,head->cmd);
+            execve(comm, head->args, envp);
+            return 1;
+        } else {
+            int status;
+            if (-1==waitpid(childPID, &status,0)) {
+                perror("waitpid: ");
+                return -1;
+            }
+            close(fd[READ_END]);
+            close(fd[WRITE_END]);
+            head = head->ins_suiv;
+        }
     }
-  }
-  return 1;
+    return 1;
 }
