@@ -14,11 +14,12 @@ int main(int argc, char** argv, char**envp) {
     }
 
     // printf("%d\n",tmp_size);
-    char **m_env = (char **)malloc(tmp_size*sizeof(char **));
+    char **m_env = (char **)malloc((tmp_size+1)*sizeof(char **));
     for (int i=0;i<tmp_size;i++) {
         m_env[i] = (char *)malloc(strlen(envp[i])*sizeof(char));
         strcpy(m_env[i],envp[i]);
     }
+    m_env[tmp_size] = NULL;
 
     // set stdout without buffering so what is printed
     // is printed immediately on the screen.
@@ -46,6 +47,9 @@ int main(int argc, char** argv, char**envp) {
             printf("env[%d]=%s\n",i,m_env[i]);
         }
         printf("\n");
+    }
+    if (0==strcmp(words[0], "ls")) {
+      ls(words, m_env);
     }
 
     free(words);

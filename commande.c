@@ -1,8 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include <dirent.h>
-#include <errno.h>
-#include <stdlib.h>
 #include "commande.h"
 
 /*
@@ -225,4 +220,36 @@ int print (char**envp, char *name, int n, FILE *f) {
         return 0;
       }
       return 1;
+}
+
+int ls(char **words, char**envp) {
+  int pid = fork();
+  int status;
+  char *args[20];
+  switch (pid) {
+    case -1:
+      perror("fork : ls");
+      exit(-1);
+    case 0:
+      args[0] = "ls";
+      int i = 1;
+      while(words[i] != NULL) {
+          args[i] = words[i];
+          i++;
+      }
+      // if (i == 1) {
+      //   int tmp;
+      //   args[1] = separate(&tmp, envp[find_var_env(envp, "PWD")], "=", -1)[1];
+      //   args[2] = NULL;
+      //   printf("Args 1 = %s\n", args[1]);
+      // } else {
+      args[i] = NULL;
+      // /}
+      execve("/bin/ls", args, envp);
+      break;
+    default:
+      if (-1==waitpid(pid, &status,0))
+        perror("waitpid: ls");
+      break;
+  }
 }
