@@ -179,93 +179,21 @@ int print (char**envp, char *name, int n, FILE *f) {
       return 1;
 }
 
-int ls(char**envp, char **words) {
-  int pid = fork();
-  int status;
-  switch (pid) {
-    case -1:
-      perror("fork : ls");
-      return -1;
-    case 0:
-      execve("/bin/ls", words, envp);
-      break;
-    default:
-      if (-1==waitpid(pid, &status,0))
-        perror("waitpid: ls");
-      break;
-  }
-  return 0;
-}
-
-int cat(char**envp, char **words) {
-    int pid = fork();
-    int status;
-    switch (pid) {
-        case -1:
-            perror("fork : cat");
-            return -1;
-        case 0:
-            execve("/bin/cat", words, envp);
-            break;
-        default:
-            if (-1==waitpid(pid, &status,0))
-                perror("waitpid: cat");
-            break;
-        }
-    return 0;
-}
-
-int more(char**envp, char **words) {
-    int pid = fork();
-    int status;
-    switch (pid) {
-        case -1:
-            perror("fork : more");
-            return -1;
-        case 0:
-            execve("/bin/more", words, envp);
-            break;
-        default:
-            if (-1==waitpid(pid, &status,0))
-                perror("waitpid: more");
-            break;
-        }
-    return 0;
-}
-
-int grep(char**envp, char **words) {
-    int pid = fork();
-    int status;
-    switch (pid) {
-        case -1:
-            perror("fork : grep");
-            return -1;
-        case 0:
-            for (int i=0; words[i]!=NULL; i++) {
-                if (words[i][0] == '"') {
-                    int size = strlen(words[i]);
-                    if (words[i][size-1] == '"') {
-                        int k=0;
-                        for (; k<size-2; k++) {
-                            words[i][k] = words[i][k+1];
-                        }
-                        words[i][k] = '\0';
-                    }
-                }
-            }
-            execve("/bin/grep", words, envp);
-            break;
-        default:
-            if (-1==waitpid(pid, &status,0))
-                perror("waitpid: grep");
-            break;
-        }
-    return 0;
-}
-
 int externCommands(char**envp, char **words) {
     int pid = fork();
     int status;
+
+    int opt = 0;
+    int i = 0;
+    while (words[i]!=NULL)
+      i++;
+
+    if (words[i-1][0] == '&') {
+      opt = WNOHANG;
+      words[i-1] = NULL;
+    }
+
+
     if (pid == -1) {
         perror("fork : ");
         return -1;
@@ -296,7 +224,7 @@ int externCommands(char**envp, char **words) {
         execve(comm, words, envp);
         return 0;
     }
-    if (-1==waitpid(pid, &status,0)) {
+    if (-1==waitpid(pid, &status,opt)) {
         perror("waitpid: ");
         return -1;
     }
