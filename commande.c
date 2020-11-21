@@ -257,6 +257,7 @@ int execCommands(char**envp, char **words) {
         while ((words[i] != NULL) && (words[i][0] != '|')){
             i++;
         }
+
         if (words[i] != NULL) {
             words[i] = NULL;
             actLis->ins_suiv = (ins *) malloc(sizeof(ins));
@@ -270,35 +271,39 @@ int execCommands(char**envp, char **words) {
         }
         i++;
     }
-
+    int childPID;
     while (head != NULL) {
-        int childPID = fork();
+        childPID = fork();
         if (childPID < 0) {
             exit(-1);
         }
         if (childPID == 0) {
             if (head->input != -1) {
                 dup2(head->input, STDIN_FILENO);
+                close(head->input);
             }
             dup2(head->output, STDOUT_FILENO);
+            //close(head->output);
             char comm[6+strlen(words[0])];
             char tmp[] = "/bin/";
             for (int i=0; i<7; i++) {
                 comm[i] = tmp[i];
             }
             strcat(comm,head->cmd);
+
             execve(comm, head->args, envp);
-            return 1;
         } else {
-            int status;
-            if (-1==waitpid(childPID, &status,0)) {
-                perror("waitpid: ");
-                return -1;
-            }
-            close(fd[READ_END]);
-            close(fd[WRITE_END]);
+
+            close(head->input);
+            close(head->output);
+
             head = head->ins_suiv;
         }
+    }
+    int status;
+    if (-1==waitpid(childPID, &status,0)) {
+        perror("waitpid: ");
+        return -1;
     }
     return 1;
 }
