@@ -244,16 +244,22 @@ int execCommands(char**envp, char **words, int do_in_background) {
         char *fname = NULL;
         while ((words[i] != NULL) && strcmp(words[i], "|") != 0) {
             if (strcmp(words[i], ">") == 0) {
-                actLis->red = 1;
-                words[i] = NULL;
-                i++;
-                fname = words[i];
-            }
-            if (strcmp(words[i], ">>") == 0) {
-                actLis->red = 2;
-                words[i] = NULL;
-                i++;
-                fname = words[i];
+              words[i] = NULL;
+              i++;
+              if (words[i] != NULL) {
+                if (strcmp(words[i], ">") == 0) {
+                  actLis->red = 2;
+                  words[i] = NULL;
+                  i++;
+                  fname = words[i];
+                } else {
+                  actLis->red = 1;
+                  fname = words[i];
+                }
+              } else {
+                printf("bash syntax error\n");
+                return 1;
+              }
             }
             i++;
         }
@@ -273,7 +279,7 @@ int execCommands(char**envp, char **words, int do_in_background) {
                 actLis->output = fileno(fopen(fname,"w"));
             } else if (actLis->red == 2) {
                 close(actLis->output);
-                actLis->output = fileno(fopen(fname,"wa"));
+                actLis->output = fileno(fopen(fname,"a"));
             }
 
             //on passe a la commande suivante
@@ -285,13 +291,13 @@ int execCommands(char**envp, char **words, int do_in_background) {
             if (actLis->red == 1) {
                 actLis->output = fileno(fopen(fname,"w"));
             } else if (actLis->red == 2) {
-                actLis->output = fileno(fopen(fname,"wa"));
+                actLis->output = fileno(fopen(fname,"a"));
             }
             end = 1;
         }
         i++;
     }
-    // on execute l'instruction actuelle
+    // on execute si l'instruction interne
     if (0==strcmp(head->cmd, "pwd"))
         pwd(envp,0);
     else if (0==strcmp(head->cmd, "print"))
@@ -306,7 +312,7 @@ int execCommands(char**envp, char **words, int do_in_background) {
         cd(envp,head->args[1]);
     else if (0==strcmp(head->cmd, "env"))
         print(envp,NULL);
-    else {
+    else { //l'instruction est externe
       int childPID;
       while (head != NULL) {
           childPID = fork();
@@ -333,12 +339,12 @@ int execCommands(char**envp, char **words, int do_in_background) {
               }
               strcat(comm,head->cmd);
 
+              // on vérifie si la commande existe
               FILE *file;
               if (file = fopen(comm, "r")){
                   fclose(file);
                   //on execute la commande avec les arguments
                   execve(comm, head->args, envp);
-
               } else {
                   printf("Commande missing\n");
                   return 1;
