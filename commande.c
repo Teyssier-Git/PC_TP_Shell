@@ -231,30 +231,57 @@ int execCommands(char**envp, char **words, int do_in_background) {
     //Par défaut, on attend l'execusion du CHILD
     head->input = STDIN_FILENO;
     int end = 0;
-    // On creé l'instruction
+    // On créé l'instruction
     while ((end != 1) && (words[i] != NULL)) {
-      //  on recupère a commande et ces arguments
+      //  on recupère la commande et ses arguments
         actLis->cmd = words[i];
         actLis->args = words + i;
-        while ((words[i] != NULL) && (strcmp(words[i], "|") != 0)) {
+        char red = '\0';
+        char *fname = NULL;
+        while ((words[i] != NULL) && strcmp(words[i], "|") != 0) {
+            if (strcmp(words[i], ">") == 0) {
+                red = '>';
+                words[i] = NULL;
+                i++;
+                fname = words[i];
+            }
+            // if (strcmp(words[i], "<") != 0)
+            //     red = '<';
+            // if (strcmp(words[i], ">>") != 0)
+            //     red = 'x';
             i++;
         }
 
         if (words[i] != NULL) {
-            // on a un lu un | donc on st le | a null
+            // on a un lu un | donc on set le | a null
             words[i] = NULL;
             // on cré l'instruction suivante
             actLis->ins_suiv = (ins *) malloc(sizeof(ins));
             // on set le pipe entre l'output de la commande actuelle avec l'input de la commande suivante
             pipe(fd);
             actLis->output = fd[WRITE_END];
+            // printf("Open out : %d\n",actLis->output);
             actLis->ins_suiv->input = fd[READ_END];
+            // printf("Open in : %d\n",actLis->input);
+
+            if (red == '>') {
+                close(actLis->output);
+                // printf("Close out : %d\n",actLis->output);
+                actLis->output = fileno(fopen(fname,"w"));
+                // printf("Open out : %d\n",actLis->output);
+            }
+
             //on passe a la commande suivante
             actLis = actLis->ins_suiv;
+            red = '\0';
         } else {
             // on est arrivé à la fin i.e. NULL
             actLis->ins_suiv = NULL;
             actLis->output = STDOUT_FILENO;
+            if (red == '>') {
+                actLis->output = fileno(fopen(fname,"w"));
+                // printf("Open out : %d\n",actLis->output);
+            }
             end = 1;
         }
         i++;
@@ -274,10 +301,12 @@ int execCommands(char**envp, char **words, int do_in_background) {
             if (head->input != STDIN_FILENO) {
                 dup2(head->input, STDIN_FILENO);
                 close(head->input);
+                // printf("Close in : %d\n",head->input);
             }
             if (head->output != STDOUT_FILENO) {
               dup2(head->output, STDOUT_FILENO);
               close(head->output);
+              // printf("Close out : %d\n",head->output);
             }
 
             //On rajoute les /bin/ davant la commande a executer
@@ -293,10 +322,15 @@ int execCommands(char**envp, char **words, int do_in_background) {
 
         } else { /* Parent Code */
           // On ferme les pipes, sauf si c'est STDIN et STDOUT
-            if (head->input != STDIN_FILENO)
-              close(head->input);
-            if (head->output != STDOUT_FILENO)
-              close(head->output);
+            if (head->input != STDIN_FILENO) {
+                close(head->input);
+                // printf("Close in : %d\n",head->input);
+            }
+            // printf("A : %d\n",head->output);
+            if (head->output != STDOUT_FILENO) {
+                close(head->output);
+                // printf("Close out : %d\n",head->output);
+            }
 
             //on passe à l'instruction suivantes
             head = head->ins_suiv;
