@@ -21,5 +21,6 @@ int print (char**envp, char *name, int n, FILE *f);
 int set (char **env, char *name, char *val);
 int externCommands(char**envp, char **words);
 int execCommands(char**envp, char **words);
+void zombie_cleaner();
 
 #endif

@@ -179,6 +179,26 @@ int print (char**envp, char *name, int n, FILE *f) {
       return 1;
 }
 
+void zombie_cleaner() {
+  int i_got_a_zombie = 1;
+  int deadID;
+  while(i_got_a_zombie) {
+    deadID = waitpid(-1, NULL, WNOHANG);
+    if(deadID > 0) {
+      i_got_a_zombie = 1;
+    } else if (deadID == 0) {
+      i_got_a_zombie = 0;
+    } else {
+      if (errno == ECHILD) {
+        return; // no children
+      } else {
+        perror("waitpid");
+        exit(EXIT_FAILURE);
+      }
+    }
+  }
+}
+
 int externCommands(char**envp, char **words) {
     int pid = fork();
     // printf("%s : %d\n",words[0],pid);
@@ -249,15 +269,18 @@ int execCommands(char**envp, char **words) {
     int fd[2];
 
     ins *actLis = head;
+    ins *tmp_free = head;
+    //Par défaut, on attend l'execusion du CHILD
+    int do_in_background = 0;
     head->input = -1;
+    // On creé l'instruction
     while (words[i] != NULL) {
         actLis->cmd = words[i];
         actLis->args = words + i;
         i++;
-        while ((words[i] != NULL) && (words[i][0] != '|')){
+        while ((words[i] != NULL) && (strcmp(words[i], "|") != 0)) {
             i++;
         }
-
         if (words[i] != NULL) {
             words[i] = NULL;
             actLis->ins_suiv = (ins *) malloc(sizeof(ins));
@@ -270,7 +293,10 @@ int execCommands(char**envp, char **words) {
             actLis->output = STDOUT_FILENO;
         }
         i++;
+
+
     }
+
     int childPID;
     while (head != NULL) {
         childPID = fork();
@@ -282,28 +308,39 @@ int execCommands(char**envp, char **words) {
                 dup2(head->input, STDIN_FILENO);
                 close(head->input);
             }
-            dup2(head->output, STDOUT_FILENO);
-            //close(head->output);
-            char comm[6+strlen(words[0])];
+            if (head->output != STDOUT_FILENO) {
+              dup2(head->output, STDOUT_FILENO);
+              close(head->output);
+            }
+            char comm[6+strlen(head->cmd)];
             char tmp[] = "/bin/";
             for (int i=0; i<7; i++) {
                 comm[i] = tmp[i];
             }
-            strcat(comm,head->cmd);
 
+            strcat(comm,head->cmd);
             execve(comm, head->args, envp);
         } else {
-
-            close(head->input);
-            close(head->output);
-
+            if (head->input != -1)
+              close(head->input);
+            if (head->output != STDOUT_FILENO)
+              close(head->output);
             head = head->ins_suiv;
         }
     }
+
     int status;
-    if (-1==waitpid(childPID, &status,0)) {
+    if (-1==waitpid(childPID, &status,do_in_background)) {
         perror("waitpid: ");
         return -1;
+    }
+
+
+    ins *tmp_free_suiv;
+    while (tmp_free != NULL){
+      tmp_free_suiv = tmp_free->ins_suiv;
+      free(tmp_free);
+      tmp_free = tmp_free_suiv;
     }
     return 1;
 }

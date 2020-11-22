@@ -27,12 +27,13 @@ int main(int argc, char** argv, char**envp) {
     // setbuf(stdout, NULL);
 
   for (;;) {
-    pwd(m_env, stdout, 1);
-    printf("> ");
-    fflush(stdout);
+    zombie_cleaner();
     char *line;
     char** words;
     do {
+      pwd(m_env, stdout, 1);
+      printf("> ");
+      fflush(stdout);
       line = readline();
       words = split_in_words(line);
     } while(words[0] == NULL);
@@ -54,7 +55,9 @@ int main(int argc, char** argv, char**envp) {
         execCommands(m_env,words);
         //externCommands(m_env, words);
     }
-
+    int i = 0;
+    while (words[i] != NULL)
+      free(words[i++]);
 
     free(words);
     free(line);
