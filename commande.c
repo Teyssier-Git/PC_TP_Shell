@@ -215,6 +215,12 @@ typedef struct ins_ {
   char **args; //arguments, avec la commande en premier
   int input;
   int output;
+  /*
+  red = 0 normal
+  red = 1 sortie redirigées vers fichier avec écrasement >
+  red = 2 sortie redirigées vers fichier sans écrasement >>
+  */
+  int red;
   struct ins_ *ins_suiv;
 } ins;
 
@@ -236,19 +242,21 @@ int execCommands(char**envp, char **words, int do_in_background) {
       //  on recupère la commande et ses arguments
         actLis->cmd = words[i];
         actLis->args = words + i;
-        char red = '\0';
+        actLis->red = 0;
         char *fname = NULL;
         while ((words[i] != NULL) && strcmp(words[i], "|") != 0) {
             if (strcmp(words[i], ">") == 0) {
-                red = '>';
+                actLis->red = 1;
                 words[i] = NULL;
                 i++;
                 fname = words[i];
             }
-            // if (strcmp(words[i], "<") != 0)
-            //     red = '<';
-            // if (strcmp(words[i], ">>") != 0)
-            //     red = 'x';
+            if (strcmp(words[i], ">>") == 0) {
+                actLis->red = 2;
+                words[i] = NULL;
+                i++;
+                fname = words[i];
+            }
             i++;
         }
 
@@ -260,27 +268,26 @@ int execCommands(char**envp, char **words, int do_in_background) {
             // on set le pipe entre l'output de la commande actuelle avec l'input de la commande suivante
             pipe(fd);
             actLis->output = fd[WRITE_END];
-            // printf("Open out : %d\n",actLis->output);
             actLis->ins_suiv->input = fd[READ_END];
-            // printf("Open in : %d\n",actLis->input);
 
-            if (red == '>') {
+            if (actLis->red == 1) {
                 close(actLis->output);
-                // printf("Close out : %d\n",actLis->output);
                 actLis->output = fileno(fopen(fname,"w"));
-                // printf("Open out : %d\n",actLis->output);
+            } else if (actLis->red == 2) {
+                close(actLis->output);
+                actLis->output = fileno(fopen(fname,"a"));
             }
 
             //on passe a la commande suivante
             actLis = actLis->ins_suiv;
-            red = '\0';
         } else {
             // on est arrivé à la fin i.e. NULL
             actLis->ins_suiv = NULL;
             actLis->output = STDOUT_FILENO;
-            if (red == '>') {
+            if (actLis->red == 1) {
                 actLis->output = fileno(fopen(fname,"w"));
-                // printf("Open out : %d\n",actLis->output);
+            } else if (actLis->red == 2) {
+                actLis->output = fileno(fopen(fname,"a"));
             }
             end = 1;
         }
@@ -301,12 +308,10 @@ int execCommands(char**envp, char **words, int do_in_background) {
             if (head->input != STDIN_FILENO) {
                 dup2(head->input, STDIN_FILENO);
                 close(head->input);
-                // printf("Close in : %d\n",head->input);
             }
             if (head->output != STDOUT_FILENO) {
               dup2(head->output, STDOUT_FILENO);
               close(head->output);
-              // printf("Close out : %d\n",head->output);
             }
 
             //On rajoute les /bin/ davant la commande a executer
@@ -324,12 +329,9 @@ int execCommands(char**envp, char **words, int do_in_background) {
           // On ferme les pipes, sauf si c'est STDIN et STDOUT
             if (head->input != STDIN_FILENO) {
                 close(head->input);
-                // printf("Close in : %d\n",head->input);
             }
-            // printf("A : %d\n",head->output);
             if (head->output != STDOUT_FILENO) {
                 close(head->output);
-                // printf("Close out : %d\n",head->output);
             }
 
             //on passe à l'instruction suivantes
