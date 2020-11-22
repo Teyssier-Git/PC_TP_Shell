@@ -168,8 +168,14 @@ int set (char **env, char *name, char *var) {
 
 
 int print (char**envp, char *name, int n, FILE *f) {
-      int i = find_var_env(envp, name);
-      if (i >= 0) {
+    if (name == NULL) {
+        for (int i=0; envp[i]!=NULL; i++) {
+            printf("%s\n",envp[i]);
+        }
+        return 0;
+    }
+    int i = find_var_env(envp, name);
+    if (i >= 0) {
         int nb;
         char **lignes = separate(&nb, envp[i], "=", -1);
 
@@ -179,8 +185,8 @@ int print (char**envp, char *name, int n, FILE *f) {
 
         freeSeparate(lignes, nb);
         return 0;
-      }
-      return 1;
+    }
+    return 1;
 }
 
 
