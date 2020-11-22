@@ -273,14 +273,15 @@ int execCommands(char**envp, char **words) {
     //Par défaut, on attend l'execusion du CHILD
     int do_in_background = 0;
     head->input = -1;
+    int end = 0;
     // On creé l'instruction
-    while (words[i] != NULL) {
+    while ((end != 1) && (words[i] != NULL)) {
         actLis->cmd = words[i];
         actLis->args = words + i;
-        i++;
         while ((words[i] != NULL) && (strcmp(words[i], "|") != 0)) {
             i++;
         }
+
         if (words[i] != NULL) {
             words[i] = NULL;
             actLis->ins_suiv = (ins *) malloc(sizeof(ins));
@@ -291,6 +292,7 @@ int execCommands(char**envp, char **words) {
         } else {
             actLis->ins_suiv = NULL;
             actLis->output = STDOUT_FILENO;
+            end = 1;
         }
         i++;
 
@@ -330,17 +332,16 @@ int execCommands(char**envp, char **words) {
     }
 
     int status;
-    if (-1==waitpid(childPID, &status,do_in_background)) {
+    if (-1==waitpid(childPID, &status, do_in_background)) {
         perror("waitpid: ");
         return -1;
     }
-
-
     ins *tmp_free_suiv;
     while (tmp_free != NULL){
       tmp_free_suiv = tmp_free->ins_suiv;
       free(tmp_free);
       tmp_free = tmp_free_suiv;
     }
+    free(tmp_free);
     return 1;
 }

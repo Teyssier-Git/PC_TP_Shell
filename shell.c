@@ -38,6 +38,11 @@ int main(int argc, char** argv, char**envp) {
       words = split_in_words(line);
     } while(words[0] == NULL);
     /* Execution */
+
+    int nb_words = 0;
+    while (words[nb_words] != NULL)
+      nb_words++;
+
     if (0==strcmp(words[0], "pwd"))
         pwd(m_env, stdout,0);
     else if (0==strcmp(words[0], "print"))
@@ -55,10 +60,9 @@ int main(int argc, char** argv, char**envp) {
         execCommands(m_env,words);
         //externCommands(m_env, words);
     }
-    int i = 0;
-    while (words[i] != NULL)
-      free(words[i++]);
-
+    for (int i = 0; i < nb_words; i++) {
+        free(words[i]);
+    }
     free(words);
     free(line);
 
