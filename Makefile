@@ -8,6 +8,12 @@ GCC_OPT= -Wall -g
 shell: shell.o readline.o commande.o
 	gcc $(GCC_OPT) -o $@ $^
 
+shell.o: shell.c
+
+readline.o : readline.c
+
+commande.o : commande.c
+
 test_commande: test_commande.o commande.o
 	gcc $(GCC_OPT) -o $@ $^
 

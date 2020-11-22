@@ -58,7 +58,6 @@ int main(int argc, char** argv, char**envp) {
         printf("\n");
     } else {
         execCommands(m_env,words);
-        //externCommands(m_env, words);
     }
     for (int i = 0; i < nb_words; i++) {
         free(words[i]);
