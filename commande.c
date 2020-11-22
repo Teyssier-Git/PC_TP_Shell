@@ -95,7 +95,7 @@ int find_var_env (char **env, char *varName) {
   return -1;
 }
 
-int pwd (char**envp, FILE *f, int n) {
+int pwd (char**envp, int n) {
   if (n==0)
     printf("%s\n", getcwd(NULL, 0));
   else
@@ -167,7 +167,7 @@ int set (char **env, char *name, char *var) {
 }
 
 
-int print (char**envp, char *name, int n, FILE *f) {
+int print (char**envp, char *name) {
     if (name == NULL) {
         for (int i=0; envp[i]!=NULL; i++) {
             printf("%s\n",envp[i]);
@@ -179,9 +179,7 @@ int print (char**envp, char *name, int n, FILE *f) {
         int nb;
         char **lignes = separate(&nb, envp[i], "=", -1);
 
-        fprintf(f, "%s", lignes[1]);
-        if (n==0)
-          fprintf(f, "%s", "\n");
+        printf("%s\n", lignes[1]);
 
         freeSeparate(lignes, nb);
         return 0;
@@ -275,7 +273,7 @@ int execCommands(char**envp, char **words, int do_in_background) {
                 actLis->output = fileno(fopen(fname,"w"));
             } else if (actLis->red == 2) {
                 close(actLis->output);
-                actLis->output = fileno(fopen(fname,"a"));
+                actLis->output = fileno(fopen(fname,"wa"));
             }
 
             //on passe a la commande suivante
@@ -287,64 +285,86 @@ int execCommands(char**envp, char **words, int do_in_background) {
             if (actLis->red == 1) {
                 actLis->output = fileno(fopen(fname,"w"));
             } else if (actLis->red == 2) {
-                actLis->output = fileno(fopen(fname,"a"));
+                actLis->output = fileno(fopen(fname,"wa"));
             }
             end = 1;
         }
         i++;
     }
-
     // on execute l'instruction actuelle
-    int childPID;
-    while (head != NULL) {
-        childPID = fork();
+    if (0==strcmp(head->cmd, "pwd"))
+        pwd(envp,0);
+    else if (0==strcmp(head->cmd, "print"))
+        print(envp,head->args[1]);
+    else if (0==strcmp(head->cmd, "set")) {
+      if (head->args[1] != NULL && head->args[2] != NULL)
+        set(envp,head->args[1],head->args[2]);
+      else
+        printf("Commande set incorrect\n");
+    }
+    else if (0==strcmp(head->cmd, "cd"))
+        cd(envp,head->args[1]);
+    else if (0==strcmp(head->cmd, "env"))
+        print(envp,NULL);
+    else {
+      int childPID;
+      while (head != NULL) {
+          childPID = fork();
 
-        if (childPID < 0) { /* Error */
-            exit(-1);
-        }
-        if (childPID == 0) {/* Child Code */
-
-            // On connect les pipes input et output de la commande actuelle sur SDTIN et SDTOUT
-            if (head->input != STDIN_FILENO) {
+          if (childPID < 0) { /* Error */
+              exit(-1);
+          }
+          if (childPID == 0) {/* Child Code */
+              // On connect les pipes input et output de la commande actuelle sur SDTIN et SDTOUT
+              if (head->input != STDIN_FILENO) {
                 dup2(head->input, STDIN_FILENO);
                 close(head->input);
-            }
-            if (head->output != STDOUT_FILENO) {
-              dup2(head->output, STDOUT_FILENO);
-              close(head->output);
-            }
-
-            //On rajoute les /bin/ davant la commande a executer
-            char comm[6+strlen(head->cmd)];
-            char tmp[] = "/bin/";
-            for (int i=0; i<7; i++) {
-                comm[i] = tmp[i];
-            }
-            strcat(comm,head->cmd);
-
-            //on execute la commande avec les arguments
-            execve(comm, head->args, envp);
-
-        } else { /* Parent Code */
-          // On ferme les pipes, sauf si c'est STDIN et STDOUT
-            if (head->input != STDIN_FILENO) {
-                close(head->input);
-            }
-            if (head->output != STDOUT_FILENO) {
+              }
+              if (head->output != STDOUT_FILENO) {
+                dup2(head->output, STDOUT_FILENO);
                 close(head->output);
-            }
+              }
 
-            //on passe à l'instruction suivantes
-            head = head->ins_suiv;
-        }
+              //On rajoute les /bin/ davant la commande a executer
+              char comm[6+strlen(head->cmd)];
+              char tmp[] = "/bin/";
+              for (int i=0; i<7; i++) {
+                  comm[i] = tmp[i];
+              }
+              strcat(comm,head->cmd);
+
+              FILE *file;
+              if (file = fopen(comm, "r")){
+                  fclose(file);
+                  //on execute la commande avec les arguments
+                  execve(comm, head->args, envp);
+
+              } else {
+                  printf("Commande missing\n");
+                  return 1;
+              }
+          } else { /* Parent Code */
+            // On ferme les pipes, sauf si c'est STDIN et STDOUT
+              if (head->input != STDIN_FILENO) {
+                  close(head->input);
+              }
+              if (head->output != STDOUT_FILENO) {
+                  close(head->output);
+              }
+
+              //on passe à l'instruction suivantes
+              head = head->ins_suiv;
+          }
+      }
+
+      // on Attend l'execution des fils
+      int status;
+      if (-1==waitpid(childPID, &status, do_in_background)) {
+          perror("waitpid: ");
+          return -1;
+      }
     }
 
-    // on Attend l'execution des fils
-    int status;
-    if (-1==waitpid(childPID, &status, do_in_background)) {
-        perror("waitpid: ");
-        return -1;
-    }
 
     // Free la liste des instructions
     ins *tmp_free_suiv;

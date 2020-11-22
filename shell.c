@@ -31,7 +31,7 @@ int main(int argc, char** argv, char**envp) {
     char *line;
     char** words;
     do {
-      pwd(m_env, stdout, 1);
+      pwd(m_env, 1);
       printf("> ");
       fflush(stdout);
       line = readline();
@@ -49,22 +49,9 @@ int main(int argc, char** argv, char**envp) {
       words[nb_words -1 ] = NULL;
     }
 
-    if (0==strcmp(words[0], "pwd"))
-        pwd(m_env, stdout,0);
-    else if (0==strcmp(words[0], "print"))
-        print(m_env,words[1],0,stdout);
-    else if (0==strcmp(words[0], "set"))
-        set(m_env,words[1],words[2]);
-    else if (0==strcmp(words[0], "cd"))
-        cd(m_env,words[1]);
-    else if (0==strcmp(words[0], "env")) {
-        for (int i=0;i<tmp_size;i++) {
-            printf("env[%d]=%s\n",i,m_env[i]);
-        }
-        printf("\n");
-    } else {
-        execCommands(m_env,words, do_in_background);
-    }
+
+    execCommands(m_env,words, do_in_background);
+
     for (int i = 0; i < nb_words; i++) {
         free(words[i]);
     }
