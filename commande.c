@@ -252,7 +252,7 @@ int execCommands(char**envp, char **words, int do_in_background) {
                   words[i] = NULL;
                   i++;
                   fname = words[i];
-                } else {
+              } else {
                   actLis->red = 1;
                   fname = words[i];
                 }
@@ -260,7 +260,12 @@ int execCommands(char**envp, char **words, int do_in_background) {
                 printf("bash syntax error\n");
                 return 1;
               }
-            }
+          } else if (strcmp(words[i], "<") == 0) {
+              actLis->red = 3;
+              words[i] = NULL;
+              i++;
+              fname = words[i];
+          }
             i++;
         }
 
@@ -280,6 +285,9 @@ int execCommands(char**envp, char **words, int do_in_background) {
             } else if (actLis->red == 2) {
                 close(actLis->output);
                 actLis->output = fileno(fopen(fname,"a"));
+            } else if (actLis->red == 3) {
+                close(actLis->input);
+                actLis->input = fileno(fopen(fname,"r"));
             }
 
             //on passe a la commande suivante
@@ -292,6 +300,8 @@ int execCommands(char**envp, char **words, int do_in_background) {
                 actLis->output = fileno(fopen(fname,"w"));
             } else if (actLis->red == 2) {
                 actLis->output = fileno(fopen(fname,"a"));
+            } else if (actLis->red == 3) {
+                actLis->input = fileno(fopen(fname,"r"));
             }
             end = 1;
         }
