@@ -57,6 +57,10 @@ char ** separate(int *bn, char *chaine, char *sep, int nb_sep) {
   return strArray;
 }
 
+/*
+Fonction qui libère les allocations faites dans separate
+*/
+
 void freeSeparate(char **result, int nb) {
     for (int i=0; i<nb; i++) {
         free(result[i]);
@@ -92,39 +96,39 @@ int find_var_env (char **env, char *varName) {
 }
 
 int pwd (char**envp, FILE *f, int n) {
-  int i = find_var_env(envp, "PWD");
-  if (i >= 0) {
-    int nb;
-    char **lignes = separate(&nb, envp[i], "=", -1);
-
-    fprintf(f, "%s", lignes[1]);
-    if (n==0)
-      fprintf(f, "%s", "\n");
-
-    freeSeparate(lignes, nb);
-    return 0;
-  }
-  return 1;
+  if (n==0)
+    printf("%s\n", getcwd(NULL, 0));
+  else
+    printf("%s", getcwd(NULL, 0));
+  return 0;
 }
-
-
 
 
 int cd (char **envp, char *name) {
   int nb_oldPWD;
+  //On récupère le PWD actuelle
   char **oldPWD = separate(&nb_oldPWD, envp[find_var_env(envp, "PWD")], "=", -1);
   if (strcmp(name, "~") == 0) {
+    /* On replace le ~ lue par le repertoire home qu'on récupère dans l'environnement
+    i.e. name = home
+    */
     int nb_tmp;
     char **tmp = separate(&nb_tmp, envp[find_var_env(envp, "HOME")], "=", -1);
     strcpy(name,tmp[1]);
     freeSeparate(tmp, nb_tmp);
   }
+
   if (!chdir(name)) {
-    char *newPWD = getcwd(NULL, 0);
+    /*Le chemin spécifié existe
+    La commande chdir a mis a jour le workind directory
+    */
+    char *newPWD = getcwd(NULL, 0); // on récupère le nouveau PWD
+    // on met a jour l'environnement
     set(envp, "PWD", newPWD);
     set(envp, "OLDPWD", oldPWD[1]);
     free(newPWD);
   } else {
+    // le fichier spécifié n'était pas correct
     printf("BASH : cd : %s no such file or firectory\n", name);
   }
   freeSeparate(oldPWD, nb_oldPWD);
@@ -179,6 +183,7 @@ int print (char**envp, char *name, int n, FILE *f) {
       return 1;
 }
 
+
 void zombie_cleaner() {
   int i_got_a_zombie = 1;
   int deadID;
@@ -199,62 +204,9 @@ void zombie_cleaner() {
   }
 }
 
-int externCommands(char**envp, char **words) {
-    int pid = fork();
-    // printf("%s : %d\n",words[0],pid);
-    int status;
-
-    int opt = 0;
-    int i = 0;
-    while (words[i]!=NULL)
-      i++;
-
-    if (words[i-1][0] == '&') {
-      opt = WNOHANG;
-      words[i-1] = NULL;
-    }
-
-
-    if (pid == -1) {
-        perror("fork : ");
-        return -1;
-    }
-    if (pid == 0) {
-        /* transforme "..." -> ... */
-        for (int i=0; words[i]!=NULL; i++) {
-            // printf("%s\n",words[i]);
-            if (words[i][0] == '"') {
-                int size = strlen(words[i]);
-                if (words[i][size-1] == '"') {
-                    int k=0;
-                    for (; k<size-2; k++) {
-                        words[i][k] = words[i][k+1];
-                    }
-                    words[i][k] = '\0';
-                }
-            }
-        }
-
-        /* créé /bin/... */
-        char comm[6+strlen(words[0])];
-        char tmp[] = "/bin/";
-        for (int i=0; i<7; i++) {
-            comm[i] = tmp[i];
-        }
-        strcat(comm,words[0]);
-        execve(comm, words, envp);
-        return 0;
-    }
-    if (-1==waitpid(pid, &status,opt)) {
-        perror("waitpid: ");
-        return -1;
-    }
-    return 0;
-}
-
 typedef struct ins_ {
-  char *cmd;
-  char **args;
+  char *cmd; //commande
+  char **args; //arguments, avec la commande en premier
   int input;
   int output;
   struct ins_ *ins_suiv;
@@ -263,7 +215,7 @@ typedef struct ins_ {
 #define	READ_END	0
 #define	WRITE_END	1
 
-int execCommands(char**envp, char **words) {
+int execCommands(char**envp, char **words, int do_in_background) {
     int i = 0;
     ins *head = (ins *)malloc(sizeof(ins));
     int fd[2];
@@ -271,11 +223,11 @@ int execCommands(char**envp, char **words) {
     ins *actLis = head;
     ins *tmp_free = head;
     //Par défaut, on attend l'execusion du CHILD
-    int do_in_background = 0;
-    head->input = -1;
+    head->input = STDIN_FILENO;
     int end = 0;
     // On creé l'instruction
     while ((end != 1) && (words[i] != NULL)) {
+      //  on recupère a commande et ces arguments
         actLis->cmd = words[i];
         actLis->args = words + i;
         while ((words[i] != NULL) && (strcmp(words[i], "|") != 0)) {
@@ -283,30 +235,37 @@ int execCommands(char**envp, char **words) {
         }
 
         if (words[i] != NULL) {
+            // on a un lu un | donc on st le | a null
             words[i] = NULL;
+            // on cré l'instruction suivante
             actLis->ins_suiv = (ins *) malloc(sizeof(ins));
+            // on set le pipe entre l'output de la commande actuelle avec l'input de la commande suivante
             pipe(fd);
             actLis->output = fd[WRITE_END];
             actLis->ins_suiv->input = fd[READ_END];
+            //on passe a la commande suivante
             actLis = actLis->ins_suiv;
         } else {
+            // on est arrivé à la fin i.e. NULL
             actLis->ins_suiv = NULL;
             actLis->output = STDOUT_FILENO;
             end = 1;
         }
         i++;
-
-
     }
 
+    // on execute l'instruction actuelle
     int childPID;
     while (head != NULL) {
         childPID = fork();
-        if (childPID < 0) {
+
+        if (childPID < 0) { /* Error */
             exit(-1);
         }
-        if (childPID == 0) {
-            if (head->input != -1) {
+        if (childPID == 0) {/* Child Code */
+
+            // On connect les pipes input et output de la commande actuelle sur SDTIN et SDTOUT
+            if (head->input != STDIN_FILENO) {
                 dup2(head->input, STDIN_FILENO);
                 close(head->input);
             }
@@ -314,28 +273,38 @@ int execCommands(char**envp, char **words) {
               dup2(head->output, STDOUT_FILENO);
               close(head->output);
             }
+
+            //On rajoute les /bin/ davant la commande a executer
             char comm[6+strlen(head->cmd)];
             char tmp[] = "/bin/";
             for (int i=0; i<7; i++) {
                 comm[i] = tmp[i];
             }
-
             strcat(comm,head->cmd);
+
+            //on execute la commande avec les arguments
             execve(comm, head->args, envp);
-        } else {
-            if (head->input != -1)
+
+        } else { /* Parent Code */
+          // On ferme les pipes, sauf si c'est STDIN et STDOUT
+            if (head->input != STDIN_FILENO)
               close(head->input);
             if (head->output != STDOUT_FILENO)
               close(head->output);
+
+            //on passe à l'instruction suivantes
             head = head->ins_suiv;
         }
     }
 
+    // on Attend l'execution des fils
     int status;
     if (-1==waitpid(childPID, &status, do_in_background)) {
         perror("waitpid: ");
         return -1;
     }
+
+    // Free la liste des instructions
     ins *tmp_free_suiv;
     while (tmp_free != NULL){
       tmp_free_suiv = tmp_free->ins_suiv;

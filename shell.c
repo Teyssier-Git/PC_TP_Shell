@@ -43,6 +43,12 @@ int main(int argc, char** argv, char**envp) {
     while (words[nb_words] != NULL)
       nb_words++;
 
+    int do_in_background = 0;
+    if (strcmp(words[nb_words - 1], "&") == 0) {
+      do_in_background =WNOHANG;
+      words[nb_words -1 ] = NULL;
+    }
+
     if (0==strcmp(words[0], "pwd"))
         pwd(m_env, stdout,0);
     else if (0==strcmp(words[0], "print"))
@@ -57,7 +63,7 @@ int main(int argc, char** argv, char**envp) {
         }
         printf("\n");
     } else {
-        execCommands(m_env,words);
+        execCommands(m_env,words, do_in_background);
     }
     for (int i = 0; i < nb_words; i++) {
         free(words[i]);

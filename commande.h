@@ -15,12 +15,13 @@
 char ** separate(int *bn, char *chaine, char *sep, int nb_sep) ;
 
 int cd (char **envp,char *name);
-void cp(void);
 int pwd (char**envp, FILE *f, int n);
 int print (char**envp, char *name, int n, FILE *f);
 int set (char **env, char *name, char *val);
-int externCommands(char**envp, char **words);
-int execCommands(char**envp, char **words);
+
+//Fonction qui executes les commandes en externes
+int execCommands(char**envp, char **words, int);
+// fonction qui clean les zombies laissés en background
 void zombie_cleaner();
 
 #endif
