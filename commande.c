@@ -69,7 +69,8 @@ void freeSeparate(char **result, int nb) {
 }
 
 /*
-A changer, copié de dodo le sang
+Cette fonction provient de Dorian BARET
+Nous n'avons pas eut le temps de refaire la notre
 */
 int find_var_env (char **env, char *varName) {
   int i;
